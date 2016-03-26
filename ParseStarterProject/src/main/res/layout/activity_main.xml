@@ -1,0 +1,129 @@
+<!--
+  ~ Copyright (c) 2015-present, Parse, LLC.
+  ~ All rights reserved.
+  ~
+  ~ This source code is licensed under the BSD-style license found in the
+  ~ LICENSE file in the root directory of this source tree. An additional grant
+  ~ of patent rights can be found in the PATENTS file in the same directory.
+  -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                tools:context=".MainActivity">
+
+<!--    <TextView android:text="Wifi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/wifi"
+        android:textSize="35dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        />-->
+
+<!--    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listView"
+        android:layout_below="@+id/wifi"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/secondActivity"
+        android:background="#fff5d376" />-->
+
+ <!--   <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Image Activity"
+        android:id="@+id/secondActivity"
+        android:layout_above="@+id/sendButton"
+        android:onClick="gotoImageActivity"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Testing Data"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/sendButton"
+        android:onClick="sendDataToParseForEachRoom"/>-->
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Room Selected : "
+        android:id="@+id/roomText"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="40dp"
+        android:layout_marginTop="10dp"
+        android:textSize="25dp"/>
+
+
+    <Spinner
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/directionList"
+        android:layout_below="@+id/roomText">
+    </Spinner>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="X Pos : "
+        android:id="@+id/xPos"
+        android:textSize="25dp"
+        android:layout_below="@+id/directionList"
+        android:layout_alignBaseline="@+id/xPosValue"
+        />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/xPosValue"
+        android:layout_toRightOf="@+id/xPos"
+        android:layout_below="@+id/directionList"
+        android:layout_marginTop="15dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Y Pos : "
+        android:id="@+id/yPos"
+        android:textSize="25dp"
+        android:layout_below="@+id/xPos"
+        android:layout_alignBaseline="@+id/yPosValue"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/yPosValue"
+        android:layout_toRightOf="@+id/yPos"
+        android:layout_below="@+id/xPosValue"
+        android:layout_marginTop="15dp"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send Data"
+        android:id="@+id/sendData"
+        android:onClick="sendDataToParseForEachRoom"
+        android:layout_below="@+id/yPosValue"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="42dp" />
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Data Activity"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="dataTestingActivity"
+        />
+
+</RelativeLayout>

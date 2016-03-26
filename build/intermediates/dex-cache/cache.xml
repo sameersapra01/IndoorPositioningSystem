@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="C:\Users\samee\.gradle\caches\modules-2\files-2.1\com.parse\parse-android\1.12.0\34ca297c889cd2023074946c7097d96b30b20891\parse-android-1.12.0.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="34ca297c889cd2023074946c7097d96b30b20891">
+        <dex dex="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\pre-dexed\debug\parse-android-1.12.0-e4eaae92b3ad4ab922432c54098ddea4f8ae393c.jar" />
+    </item>
+    <item
+        jar="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\exploded-aar\com.android.support\appcompat-v7\22.2.0\jars\classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="73753982da6bde518f3a4c6b372749981d14d1a0">
+        <dex dex="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\pre-dexed\debug\classes-23c0abe537de02d92f5863102dd1122d2c9c95a5.jar" />
+    </item>
+    <item
+        jar="C:\Users\samee\.gradle\caches\modules-2\files-2.1\com.parse.bolts\bolts-tasks\1.3.0\8a62fd16fcc1c06f284fc98e6cbded2a5af1dd4c\bolts-tasks-1.3.0.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="8a62fd16fcc1c06f284fc98e6cbded2a5af1dd4c">
+        <dex dex="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\pre-dexed\debug\bolts-tasks-1.3.0-011caafba044fe4f68292f36e102eb5a58c2fd16.jar" />
+    </item>
+    <item
+        jar="C:\Users\samee\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\22.2.0\support-annotations-22.2.0.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="66b42a1f3eb7676070b7ef7f14b603483aecbee1">
+        <dex dex="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\pre-dexed\debug\support-annotations-22.2.0-d4c6f849e43ab75ad95bf077634ee61d692aee20.jar" />
+    </item>
+    <item
+        jar="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\exploded-aar\com.android.support\support-v4\22.2.0\jars\libs\internal_impl-22.2.0.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="57f2ab85c164ff1676ec64dee787981c046fab79">
+        <dex dex="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\pre-dexed\debug\internal_impl-22.2.0-1fd215fe53aca77f5f415a70d2a2dd9b4e344283.jar" />
+    </item>
+    <item
+        jar="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\exploded-aar\com.android.support\support-v4\22.2.0\jars\classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="1ee588ff2c4daf7b97c1cbf922a6c7f027285c2f">
+        <dex dex="C:\Users\samee\Desktop\HD\Capstone-With-Map\Capstone-With-mapworking\ParseStarterProject\build\intermediates\pre-dexed\debug\classes-67933c5f6ce0b44ee050ee690cb1689c9aef2594.jar" />
+    </item>
+
+</items>
