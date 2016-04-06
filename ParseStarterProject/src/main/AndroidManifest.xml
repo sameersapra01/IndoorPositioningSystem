@@ -38,7 +38,9 @@
 
         </activity>
 
-        <activity android:name=".SendDataTesting"></activity>
+        <activity android:name=".SendDataTesting"
+            android:screenOrientation="portrait">
+        </activity>
 
     </application>
 

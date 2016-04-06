@@ -1,3 +1,4 @@
+
 package com.parse.starter;
 
 import android.content.Intent;
@@ -8,4 +9,9 @@ public class EuclideanDistance {
     double distance;
     float x;
     int y;
+    double dlink95A8;
+    double dlink7D28;
+    double dlink7D8C;
+    int globalY;
+    double globalX;
 }

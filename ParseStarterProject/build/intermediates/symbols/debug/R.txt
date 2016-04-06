@@ -412,7 +412,8 @@ int drawable abc_textfield_search_default_mtrl_alpha 0x7f020039
 int drawable abc_textfield_search_material 0x7f02003a
 int drawable background 0x7f02003b
 int drawable images 0x7f02003c
-int drawable notification_template_icon_bg 0x7f02003d
+int drawable notification_template_icon_bg 0x7f02003e
+int drawable person 0x7f02003d
 int id Map 0x7f0d0056
 int id Person 0x7f0d0058
 int id action0 0x7f0d0059
