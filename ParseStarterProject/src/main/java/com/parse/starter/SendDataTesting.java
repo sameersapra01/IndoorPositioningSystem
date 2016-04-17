@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.Image;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -18,8 +19,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +43,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import android.os.Handler;
 
+import java.io.*;
+import java.net.InetAddress;
+import java.net.Socket;
+
 /**
  * Created by samee on 2016-02-01.
  */
@@ -50,20 +57,25 @@ public class SendDataTesting extends Activity {
     private static final String Router7D28 = "dlink-7D28";
     private static final String Router7D8C = "dlink-7D8C";
 
+    //consts for range check
+    private static final float k_ZERO = 0.0f;
+    private static final float k_THREE = 3.0f;
+    private static final float k_ITERATION = .30f;
+
     //constant X Point
     private static final int K_OUR_POINT = 26;
     
     //range between last 2 Positions is 3 feets
     private static final int rangeBT2YPos = 8;
 
-    //number of real time data
+    //number of real time data threads
     private static final int numberOfTimesRTData = 5;
 
     //median point
     private static final int medianIndex = 2;
 
     //accuracy
-    private static final int leastDistanceRange = 15;
+    double leastDistanceRange = 10.0;
 
     //variables required for wifi scanning
     WifiManager wifi;
@@ -103,6 +115,10 @@ public class SendDataTesting extends Activity {
 
     //get initial user position
     boolean gotInitialPosition = false;
+    //fist start for threads
+    boolean firstStart = false;
+    //
+    int countOutOfRangePositionCalculated = 0;
 
 //desk variables
     int offSetTopBorder = 72;
@@ -118,8 +134,11 @@ public class SendDataTesting extends Activity {
     private Set<Float> badDeskNumbers = new HashSet<Float>(Arrays.asList(
             new Float[]{0.3f,0.4f,0.5f,0.6f,1.3f,1.4f,1.5f,1.6f,1.7f,1.8f,2.3f,2.4f,2.5f,2.6f,2.7f,2.8f}
     ));
+    float[] possibleXValues= {0.0f,0.1f,0.2f,0.3f,0.4f,0.5f,0.6f,0.7f,0.8f,0.9f,1.0f,1.1f,1.2f,1.3f,1.4f,1.5f,1.6f,1.7f,1.8f,1.9f,1.95f,2.0f,2.1f,2.2f,
+            2.3f,2.4f,2.5f,2.6f,2.7f,2.8f,2.9f,3.0f};
 
     int[] fineNumbers = {0,1,2,3};
+
 
 
     @Override
@@ -139,6 +158,8 @@ public class SendDataTesting extends Activity {
             handlerThread.start();
             Looper looper = handlerThread.getLooper();
             Handler handler = new Handler(looper);
+
+
 
             registerReceiver(wifiReciever, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION), null, handler);
 
@@ -176,215 +197,206 @@ public class SendDataTesting extends Activity {
             long delay = 200;
             exec.scheduleWithFixedDelay(new UpdateLocation(), 0, delay, TimeUnit.MILLISECONDS);*/
 
+
+
+
         } catch (Exception ex) {
             Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
 
-
-
     @Override
-
     public boolean onTouchEvent(MotionEvent event) {
 
-        if(!gotInitialPosition) {
-            boolean isTouchError = false;
-            int x = (int) event.getX();
-            int y = (int) event.getY() - offSetTopBorder;
-            ImageView map = (ImageView) findViewById(R.id.Map);
-            float mapX = map.getLeft();
-            float mapY = map.getTop();
-//        if(pathDraw == true)
-//        {
-//            pathArray = new int[3];
-//            int count = 0;
-//
-//            while (count < 3) {
-//                ImageView iv = new ImageView(this);
-//                iv.setImageResource(R.drawable.path);
-//                RelativeLayout rl = (RelativeLayout) findViewById(R.id.BackGround);
-//
-//                iv.setId(View.generateViewId());
-//                pathArray[count] = iv.getId();
-//                rl.addView(iv);
-//
-//                count++;
-//            }
-//
-//
-//            pathDraw = false;
-//        }
+            if(!gotInitialPosition)
+            {
+                boolean isTouchError = false;
 
-            Xratio = (map.getRight() - map.getLeft()) / roomYLength;
-            Yratio = (map.getBottom() - map.getTop()) / roomXLength;
-            float feetX = (x - mapX) / Xratio;
-            float feetY = (y - mapY) / Yratio;
-            if (feetX >= kZERO && feetX <= roomYLength && feetY >= kZERO && feetY <= roomXLength) {
-                float xPos = kZERO;
-                float yPos = feetX;
-                feetY = (int) feetY;
+                int x = (int) event.getX();
+                int y = (int) event.getY() - offSetTopBorder;
+                ImageView map = (ImageView) findViewById(R.id.Map);
+                float mapX = map.getLeft();
+                float mapY = map.getTop();
+    //        if(pathDraw == true)
+    //        {
+    //            pathArray = new int[3];
+    //            int count = 0;
+    //
+    //            while (count < 3) {
+    //                ImageView iv = new ImageView(this);
+    //                iv.setImageResource(R.drawable.path);
+    //                RelativeLayout rl = (RelativeLayout) findViewById(R.id.BackGround);
+    //
+    //                iv.setId(View.generateViewId());
+    //                pathArray[count] = iv.getId();
+    //                rl.addView(iv);
+    //
+    //                count++;
+    //            }
+    //
+    //
+    //            pathDraw = false;
+    //        }
 
-                float countXPos = 0f;
-                for (int i = 0; i < roomXLength; i++) {
-                    //set the borders of row 0 and 2
-                    if (i >= kZERO && i <= maxOfRowZerro && feetY <= maxOfRowZerro) {
-                        xPos = 0;//row 0
-                        break;
-                    } else if (i >= startOfRowThree && feetY >= startOfRowThree) {
-                        xPos = 3; //row 3
-                        break;
-                    } else if (i == specialCase && feetY == specialCase) //setting special case between 1.9 &2.0 = 1.95
-                    {
-                        xPos = 1.95f;
-                        break;
-                    } else if (i == feetY) {
-                        xPos = countXPos;
-                        break;
-                    }
-                    if (i >= maxOfRowZerro && i != specialCase) {
-                        countXPos = countXPos + additionToXPos;
-                    }
-                }
-                xPos = (int) (xPos * 100);
-                xPos = (float) xPos / (float) 100d;
-                if (badDeskNumbers.contains(xPos)) {
-                    //check if the touch was on the desks
-                    if (yPos < deskBorder) {
-                        isTouchError = true;
-                        gotInitialPosition = false;
-                    } else // if not default set to 26 for yPosition
-                    {
-                        yPos = sideYPos;
-                    }
-                } else {
+                Xratio = (map.getRight() - map.getLeft()) / roomYLength;
+                Yratio = (map.getBottom() - map.getTop()) / roomXLength;
+                float feetX = (x - mapX) / Xratio;
+                float feetY = (y - mapY) / Yratio;
+                if (feetX >= kZERO && feetX <= roomYLength && feetY >= kZERO && feetY <= roomXLength) {
+                    float xPos = kZERO;
+                    float yPos = feetX;
+                    feetY = (int) feetY;
 
-                    //the spot is between desks check if touch is less 22 on y
-                    // then default it the the rows between desks
-                    if (yPos < deskBorder) {
-                        if (xPos < 0.5) {
-                            xPos = fineNumbers[0];
-                        } else if (xPos > 0.5 && xPos < 1.5) {
-                            xPos = fineNumbers[1];
-                        } else if (xPos > 1.5 && xPos < 2.5) {
-                            xPos = fineNumbers[2];
-                        } else if (xPos > 2.5) {
-                            xPos = fineNumbers[3];
+                    float countXPos = 0f;
+                    for (int i = 0; i < roomXLength; i++) {
+                        //set the borders of row 0 and 2
+                        if (i >= kZERO && i <= maxOfRowZerro && feetY <= maxOfRowZerro) {
+                            xPos = 0;//row 0
+                            break;
+                        } else if (i >= startOfRowThree && feetY >= startOfRowThree) {
+                            xPos = 3; //row 3
+                            break;
+                        } else if (i == specialCase && feetY == specialCase) //setting special case between 1.9 &2.0 = 1.95
+                        {
+                            xPos = 1.95f;
+                            break;
+                        } else if (i == feetY) {
+                            xPos = countXPos;
+                            break;
                         }
-                    } else if (xPos != fineNumbers[0] && xPos != fineNumbers[1] &&
-                            xPos != fineNumbers[2] && xPos != fineNumbers[3])// if number is over desk line then default to 26 feet on y this does not include normal rows 0,1,2,3
-                    {
-                        yPos = sideYPos;
+                        if (i >= maxOfRowZerro && i != specialCase) {
+                            countXPos = countXPos + additionToXPos;
+                        }
                     }
-                }
-                if (isTouchError != true) {
-                    globalX = xPos;
-                    globalY = (int) yPos;
-/////////////////////////////////////////////////////////////
+                    //change to 2 decimal places
+                    xPos = (int)(xPos*100);
+                    xPos = (float)xPos/(float)100d;
+
+    //math the numbers to the closest of the possible number
+                    xPos = findNearestNumber(possibleXValues,xPos);
+
+                    if (badDeskNumbers.contains(xPos) )
+                    {
+
+                        //check if the touch was on the desks
+                        if (yPos < deskBorder) {
+                            isTouchError = true;
+                            gotInitialPosition=false;
+                        } else // if not default set to 26 for yPosition
+                        {
+                            yPos = sideYPos;
+                        }
+                    } else {
+
+                        //the spot is between desks check if touch is less 22 on y
+                        // then default it the the rows between desks
+                        if (yPos < deskBorder) {
+                            if (xPos < 0.5) {
+                                xPos = fineNumbers[0];
+                            } else if (xPos > 0.5 && xPos < 1.5) {
+                                xPos = fineNumbers[1];
+                            } else if (xPos > 1.5 && xPos < 2.5) {
+                                xPos = fineNumbers[2];
+                            } else if (xPos > 2.5) {
+                                xPos = fineNumbers[3];
+                            }
+                        } else if (xPos != fineNumbers[0] && xPos != fineNumbers[1] &&
+                                xPos != fineNumbers[2] && xPos != fineNumbers[3])// if number is over desk line then default to 26 feet on y this does not include normal rows 0,1,2,3
+                        {
+                            yPos = sideYPos;
+                        }
+                    }
+                    if (isTouchError != true) {
 
 
-                    Log.i("X Pos...", String.valueOf(globalX));
-                    Log.i("Y Pos...", String.valueOf(globalY));
-                    gotInitialPosition = true;
+                            globalX = xPos;
+                            globalY = (int) yPos;
 
-                    //map thread
-                    ScheduledThreadPoolExecutor mapThread = new ScheduledThreadPoolExecutor(5);
-                    mapThread.scheduleWithFixedDelay(new MapTask(), 0, 100, TimeUnit.MILLISECONDS);
 
-                    //can be in one single thread instead of calling it every 2 seconds.
+                            Log.i("X Pos...", String.valueOf(globalX));
+                            Log.i("Y Pos...", String.valueOf(globalY));
+                            gotInitialPosition = true;
 
-                    //wifi scan thread
-                    ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-                    long delay = 100;
-                    exec.scheduleWithFixedDelay(new UpdateLocationTask(), 0, delay, TimeUnit.MILLISECONDS);
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                } else {
-                    Toast.makeText(getBaseContext(), "Desk Touch Error", Toast.LENGTH_SHORT).show();
-                }
+                            //map thread
+                            ScheduledThreadPoolExecutor mapThread = new ScheduledThreadPoolExecutor(5);
+                            mapThread.scheduleWithFixedDelay(new MapTask(), 0, 100, TimeUnit.MILLISECONDS);
+
+                            //can be in one single thread instead of calling it every 2 seconds.
+
+                            //wifi scan thread
+                            ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+                            long delay = 100;
+                            exec.scheduleWithFixedDelay(new UpdateLocationTask(), 0, delay, TimeUnit.MILLISECONDS);
+                            firstStart = true;
+
+                    } else {
+                        Toast.makeText(getBaseContext(), "Desk Touch Error", Toast.LENGTH_SHORT).show();
+                    }
 
 
             } else {
                 Toast.makeText(getBaseContext(), "Position Clicked Out Of Range", Toast.LENGTH_SHORT).show();
             }
         }
+
         return false;
     }
 
 
-/*
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if(!gotInitialPosition) {
-            int x = (int)event.getX();
-            int y = (int)event.getY()-72;
-            ImageView map = (ImageView)findViewById(R.id.Map);
-            float mapX = map.getLeft();
-            float mapY = map.getTop();
-            Xratio = (map.getRight() - map.getLeft()) / 28;
-            Yratio = (map.getBottom() - map.getTop()) / 38;
 
-            float feetX = (x- mapX)/Xratio;
-            float feetY = (y - mapY)/Yratio ;
-            if(feetX >=0 && feetX <= 28 && feetY >=0 && feetY <=38)
+
+
+
+
+
+
+
+    public float findNearestNumber(float[] array,float myNumber)
+    {
+
+        float min=0,max=0,nearestNumber;
+
+        for(int i=0;i<array.length;i++)
+        {
+            if(array[i]<myNumber)
             {
-                float xPos = 0;
-                float yPos = feetX;
-                if (feetY >= 0 && feetY <= 5) {
-                    xPos = 0;
-                } else if (feetY > 5 && feetY <= 10) {
-                    xPos = 0.5f;
-                } else if (feetY > 10 && feetY <= 15) {
-                    xPos = 1;
-                } else if (feetY > 15 && feetY <= 20) {
-                    xPos = 1.5f;
-                } else if (feetY > 20 && feetY <= 26) {
-                    xPos = 2;
-                } else if (feetY > 26 && feetY <= 31) {
-                    xPos = 2.5f;
-                } else if (feetY > 31 && feetY <= 38) {
-                    xPos = 3;
-                }
-                if(xPos == 0.5f && yPos >= 22|| xPos == 1.5f && yPos >= 22 || xPos == 2.5f && yPos >= 22 ||
-                        xPos == 0 || xPos == 1 || xPos == 2 || xPos == 3 )
+                if(min==0)
                 {
-                    if(yPos >=26 && feetY >= 32 && feetY <=35)
-                    {
-                        Toast.makeText(getBaseContext(),"Please try again",Toast.LENGTH_SHORT).show();
-                    }
-                    else
-                    {
-                        globalX = xPos;
-                        globalY = (int) yPos;
-
-                        Log.i("X Pos...", String.valueOf(globalX));
-                        Log.i("Y Pos...", String.valueOf(globalY));
-                        gotInitialPosition = true;
-
-                        //map thread
-                        ScheduledThreadPoolExecutor mapThread = new ScheduledThreadPoolExecutor(5);
-                        mapThread.scheduleWithFixedDelay(new MapTask(), 0, 100, TimeUnit.MILLISECONDS);
-
-                        //can be in one single thread instead of calling it every 2 seconds.
-
-                        //wifi scan thread
-                        ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-                        long delay = 100;
-                        exec.scheduleWithFixedDelay(new UpdateLocationTask(), 0, delay, TimeUnit.MILLISECONDS);
-                    }
+                    min=array[i];
                 }
-                else
+                else if(array[i]>min)
                 {
-                    Toast.makeText(getBaseContext(),"Erro teacher...",Toast.LENGTH_SHORT).show();
+                    min=array[i];
+                }
+            }
+            else if(array[i]>myNumber)
+            {
+                if(max==0)
+                {
+                    max=array[i];
+                }
+                else if(array[i]<max)
+                {
+                    max=array[i];
                 }
             }
             else
             {
-                Toast.makeText(getBaseContext(),"Position Clicked Out Of Range",Toast.LENGTH_SHORT).show();
+                return array[i];
             }
         }
-        return true;
+        if(Math.abs(myNumber-min)<Math.abs(myNumber-max))
+        {
+            nearestNumber=min;
+        }
+        else
+        {
+            nearestNumber=max;
+        }
+        return nearestNumber;
     }
-*/
+
 
 
     private class MapTask implements Runnable {
@@ -395,200 +407,141 @@ public class SendDataTesting extends Activity {
 
                 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
                 public void run() {
-                    ImageView map = (ImageView) findViewById(R.id.Map);
-                    Xratio = (map.getRight() - map.getLeft()) / 28;
-                    Yratio = (map.getBottom() - map.getTop()) / 38;
+
+                    SendDataTesting.this.runOnUiThread(new Runnable() {
+
+                        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+                        public void run() {
+
+                            ImageView map = (ImageView) findViewById(R.id.Map);
+                            Xratio = (map.getRight() - map.getLeft()) / 28;
+                            Yratio = (map.getBottom() - map.getTop()) / 38;
 
 
-                    ImageView person = (ImageView) findViewById(R.id.Person);
+                            ImageView person = (ImageView) findViewById(R.id.Person);
 
-                    //x and y the user has entered converted to integer
-                    // this is the number that comes from the data
-                    globalX = (int) (globalX * 100);
-                    globalX = (float) globalX / (float) 100d;
-                    String tmpX = String.valueOf(globalX);
-                    int y = globalY;// this is the number that comes from the data
-                    int x = 0;
-                    if (tmpX.equals("0") || tmpX.equals("0.0"))
-                    {
-                        x = 2;
-                    }
-                    else if (tmpX.equals("0.1"))
-                    {
-                        x = 3;
-                    }
-                    else if (tmpX.equals("0.2"))
-                    {
-                        x = 4;
-                    }
-                    else if (tmpX.equals("0.3"))
-                    {
-                        x = 5;
-                    }
-                    else if (tmpX.equals("0.4"))
-                    {
-                        x = 6;
-                    }
-                    else if (tmpX.equals("0.5"))
-                    {
-                        x = 7;
-                    }
-                    else if (tmpX.equals("0.6"))
-                    {
-                        x = 8;
-                    }
-                    else if (tmpX.equals("0.7"))
-                    {
-                        x = 9;
-                    }
-                    else if (tmpX.equals("0.8"))
-                    {
-                        x = 10;
-                    }
-                    else if (tmpX.equals("0.9"))
-                    {
-                        x = 11;
-                    }
-                    else if (tmpX.equals("1") || tmpX.equals("1.0"))
-                    {
-                        x = 12;
-                    }
-                    else if (tmpX.equals("1.1"))
-                    {
-                        x = 13;
-                    }
-                    else if (tmpX.equals("1.2"))
-                    {
-                        x = 14;
-                    }
-                    else if (tmpX.equals("1.3"))
-                    {
-                        x = 15;
-                    }
-                    else if (tmpX.equals("1.4"))
-                    {
-                        x = 16;
-                    }
-                    else if (tmpX.equals("1.5"))
-                    {
-                        x = 17;
-                    }
-                    else if (tmpX.equals("1.6"))
-                    {
-                        x = 18;
-                    }
-                    else if (tmpX.equals("1.7"))
-                    {
-                        x = 19;
-                    }
-                    else if (tmpX.equals("1.8"))
-                    {
-                        x = 20;
-                    }
-                    else if (tmpX.equals("1.9"))
-                    {
-                        x = 21;
-                    }
-                    else if (tmpX.equals("2") || tmpX.equals("2.0"))
-                    {
-                        x = 23;
-                    }
-                    else if (tmpX.equals("2.1"))
-                    {
-                        x = 24;
-                    }
-                    else if (tmpX.equals("2.2"))
-                    {
-                        x = 25;
-                    }
-                    else if (tmpX.equals("2.3"))
-                    {
-                        x = 26;
-                    }
-                    else if (tmpX.equals("2.4"))
-                    {
-                        x = 27;
-                    }
-                    else if (tmpX.equals("2.5"))
-                    {
-                        x = 28;
-                    }
-                    else if (tmpX.equals("2.6"))
-                    {
-                        x = 29;
-                    }
-                    else if (tmpX.equals("2.7"))
-                    {
-                        x = 30;
-                    }
-                    else if (tmpX.equals("2.8"))
-                    {
-                        x = 31;
-                    }
-                    else if (tmpX.equals("2.9"))
-                    {
-                        x = 32;
-                    }
-                    else if (tmpX.equals("3") || tmpX.equals("3.0"))
-                    {
-                        x = 34;
-                    }
+                            //x and y the user has entered converted to integer
+                            // this is the number that comes from the data
+                            globalX = (int) (globalX * 100);
+                            globalX = (float) globalX / (float) 100d;
+                            globalX = findNearestNumber(possibleXValues, globalX);
+                            String tmpX = String.valueOf(globalX);
+                            int y = globalY;// this is the number that comes from the data
+                            int x = 0;
+                            if (tmpX.equals("0") || tmpX.equals("0.0")) {
+                                x = 2;
+                            } else if (tmpX.equals("0.1")) {
+                                x = 3;
+                            } else if (tmpX.equals("0.2")) {
+                                x = 4;
+                            } else if (tmpX.equals("0.3")) {
+                                x = 5;
+                            } else if (tmpX.equals("0.4")) {
+                                x = 6;
+                            } else if (tmpX.equals("0.5")) {
+                                x = 7;
+                            } else if (tmpX.equals("0.6")) {
+                                x = 8;
+                            } else if (tmpX.equals("0.7")) {
+                                x = 9;
+                            } else if (tmpX.equals("0.8")) {
+                                x = 10;
+                            } else if (tmpX.equals("0.9")) {
+                                x = 11;
+                            } else if (tmpX.equals("1") || tmpX.equals("1.0")) {
+                                x = 12;
+                            } else if (tmpX.equals("1.1")) {
+                                x = 13;
+                            } else if (tmpX.equals("1.2")) {
+                                x = 14;
+                            } else if (tmpX.equals("1.3")) {
+                                x = 15;
+                            } else if (tmpX.equals("1.4")) {
+                                x = 16;
+                            } else if (tmpX.equals("1.5")) {
+                                x = 17;
+                            } else if (tmpX.equals("1.6")) {
+                                x = 18;
+                            } else if (tmpX.equals("1.7")) {
+                                x = 19;
+                            } else if (tmpX.equals("1.8")) {
+                                x = 20;
+                            } else if (tmpX.equals("1.9")) {
+                                x = 21;
+                            } else if (tmpX.equals("1.95")) {
+                                x = 22;
+                            } else if (tmpX.equals("2") || tmpX.equals("2.0")) {
+                                x = 23;
+                            } else if (tmpX.equals("2.1")) {
+                                x = 24;
+                            } else if (tmpX.equals("2.2")) {
+                                x = 25;
+                            } else if (tmpX.equals("2.3")) {
+                                x = 26;
+                            } else if (tmpX.equals("2.4")) {
+                                x = 27;
+                            } else if (tmpX.equals("2.5")) {
+                                x = 28;
+                            } else if (tmpX.equals("2.6")) {
+                                x = 29;
+                            } else if (tmpX.equals("2.7")) {
+                                x = 30;
+                            } else if (tmpX.equals("2.8")) {
+                                x = 31;
+                            } else if (tmpX.equals("2.9")) {
+                                x = 32;
+                            } else if (tmpX.equals("3") || tmpX.equals("3.0")) {
+                                x = 34;
+                            } else {
+                                //print tmpX and y
+                                Toast.makeText(getBaseContext(), "wrong : " + tmpX + "  y:" + String.valueOf(y), Toast.LENGTH_SHORT).show();
+                            }
 
-                  /*  if (tmpX == 0) {
-                        x = 2;
-                    } else if (tmpX == 0.5) {
-                        x = 7;
-                    } else if (tmpX == 1) {
-                        x = 12;
-                    } else if (tmpX == 1.5) {
-                        x = 17;
-                    } else if (tmpX == 2) {
-                        x = 23;
-                    } else if (tmpX == 2.5) {
-                        x = 28;
-                    } else if (tmpX == 3) {
-                        x = 34;
-                    }*/
+                            //do the math to get ratio to put on map
+                            x = x * Yratio;
+                            y = y * Xratio;
 
-                    //do the math to get ratio to put on map
-                    x = x * Yratio;
-                    y = y * Xratio;
+                            //location of the person that is currently.
+                            int personX = person.getLeft();
+                            int personY = person.getTop();
+                            int personXS = person.getRight();
+                            int personYS = person.getBottom();
 
-                    //location of the person that is currently.
-                    int personX = person.getLeft();
-                    int personY = person.getTop();
-                    int personXS = person.getRight();
-                    int personYS = person.getBottom();
-
-                    int middleX = person.getLeft() + ((person.getRight() - person.getLeft()) / 2);
-                    int radX = ((person.getRight() - person.getLeft()) / 2);
-                    int middleY = person.getTop() + ((person.getBottom() - person.getTop()) / 2);
-                    int radY = ((person.getBottom() - person.getTop()) / 2);
+                            int middleX = person.getLeft() + ((person.getRight() - person.getLeft()) / 2);
+                            int radX = ((person.getRight() - person.getLeft()) / 2);
+                            int middleY = person.getTop() + ((person.getBottom() - person.getTop()) / 2);
+                            int radY = ((person.getBottom() - person.getTop()) / 2);
 
 
-                    middleX = y;
-                    middleY = x;
+                            middleX = y;
+                            middleY = x;
 
-                    personX = middleX - radX + map.getLeft();
-                    personXS = middleX + radX + map.getLeft();
-                    personY = middleY - radY + map.getTop();
-                    personYS = middleY + radY + map.getTop();
+                            personX = middleX - radX + map.getLeft();
+                            personXS = middleX + radX + map.getLeft();
+                            personY = middleY - radY + map.getTop();
+                            personYS = middleY + radY + map.getTop();
 
 
-                    person.setLeft(personX);
-                    person.setTop(personY);
-                    person.setRight(personXS);
-                    person.setBottom(personYS);
+                            person.setLeft(personX);
+                            person.setTop(personY);
+                            person.setRight(personXS);
+                            person.setBottom(personYS);
                   /*  if (person.getVisibility() == View.VISIBLE) {
                         person.setVisibility(View.INVISIBLE);
                     } else {
                         person.setVisibility(View.VISIBLE);
                     }*/
 
+
+                        }
+                    });
+
+
                 }
             });
         }
     }
+
 
 
     @Override
@@ -611,6 +564,8 @@ public class SendDataTesting extends Activity {
             Toast.makeText(this,"Error on pause..." ,Toast.LENGTH_SHORT).show();
         }
     }
+
+
 
 
 
@@ -652,30 +607,31 @@ public class SendDataTesting extends Activity {
 
                         //This list is used to store all positions found using range check into a list of LeastDistance class.
                         List<LeastDistance> Least_Distance = new ArrayList<>();
-                        List<EuclideanDistance> Euclidean_Distance = new ArrayList<>();
+
+                        List<EuclideanDistance> Euc_Distance_List = new ArrayList<>();
 
                         //make a copy of RT mean of routers for this thread
                         double threadMeanOfRouter7D28 = meanOfRouter7D28;
                         double threadMeanOfRouter7D8C = meanOfRouter7D8C;
                         double threadMeanOfRouter95A8 = meanOfRouter95A8;
 
-                    /*    //
-                        float x = 0.0f;
-                        int y = 0;*/
-
                         @Override
                         public void run() {
                             //compare RT mean with the off-line mean data and update the position on the map
                             for (DataPoint dp : dataPointsThread) {
                                 //do linear search and range checks
-                                for (float rangeIteration = 0.0f; rangeIteration <= 3.0f; rangeIteration += 1.0f) {
+                                for (float rangeIteration = k_ZERO; rangeIteration <= k_THREE; rangeIteration += k_ITERATION) {
                                     if (rangeCheck(dp.dlink7D28, threadMeanOfRouter7D28, rangeIteration) && rangeCheck(dp.dlink7D8C, threadMeanOfRouter7D8C, rangeIteration)
                                             && rangeCheck(dp.dlink95A8, threadMeanOfRouter95A8, rangeIteration)) {
 
 /////new code
+
+                                        //calculating least distance
                                         double distX=0.0;
                                         double distY=0.0;
+                                        double EuclDistance = 0.0;
                                         LeastDistance ldist = new LeastDistance();
+                                        EuclideanDistance eucD = new EuclideanDistance();
 
                                         //if x is same
                                         if(globalX==dp.xPos)
@@ -688,20 +644,31 @@ public class SendDataTesting extends Activity {
                                             distY = getYDistance(globalY, K_OUR_POINT);
                                             distY += getYDistance(dp.yPos,K_OUR_POINT);
                                             distX = getXDistance(globalX, dp.xPos);
-
                                             ldist.distance = distX+distY;
                                         }
+                                        //offline x and y
                                         ldist.x = dp.xPos;
                                         ldist.y = dp.yPos;
+                                        ldist.dlink7D28 = dp.dlink7D28;
+                                        ldist.dlink7D8C = dp.dlink7D8C;
+                                        ldist.dlink95A8 = dp.dlink95A8;
+                                        EuclDistance = calculateEuclideanDistance(threadMeanOfRouter7D28,threadMeanOfRouter7D8C,threadMeanOfRouter95A8,dp.dlink7D28,dp.dlink7D8C,dp.dlink95A8);
+                                        eucD.distance = EuclDistance;
+                                        eucD.x = dp.xPos;
+                                        eucD.y = dp.yPos;
+                                        /*Log.i(" DP : " , "Dist :  " + String.valueOf(ldist.distance) + "X : " + String.valueOf(ldist.x) + " Y : " + String.valueOf(ldist.y));*/
+
+                                        //current x and y
                                         ldist.globalX = globalX;
                                         ldist.globalY = globalY;
-
+                                        Euc_Distance_List.add(eucD);
                                         Least_Distance.add(ldist);
-                                       // break;
+
+                                        break;
 
 /////new code
 
-                                        //Eculidean Distance Code
+                                      /*  //Eculidean Distance Code
                                         double euclideanDist = 0.0;
 
                                         //create an instance of EuclideanDistance class
@@ -720,56 +687,93 @@ public class SendDataTesting extends Activity {
 
                                         //this line could fuck up, think about it
                                         //did modify this
-                                        break;
+                                        break;*/
                                     }
                                 }
                             }
 
+                            //checking the size of the LeastDistance list
                             if (Least_Distance.size() > 0) {
-                                boolean gotPositionFromLeastDist = false;
-                                double leastDist = Least_Distance.get(0).distance;
-                                for (LeastDistance ld : Least_Distance) {
 
-                                    //Log.i("DP : " , String.valueOf( edLeast.distance ) + " " + String.valueOf(edLeast.x) + " " + String.valueOf(edLeast.y) );
-                                    //getting least euclidean distance from euclidean list
-                                    if (!(leastDist < ld.distance)) {
-                                        leastDist = ld.distance;
-                                        //assign x and y to update position/location
-                                       // globalX = edLeast.x;
-                                        // globalY = edLeast.y;
-                                        if(ld.distance <=leastDistanceRange)
+                                //sort the euclidean list and ge the 3 least distances and get their mean, compare it with offline and get the position
+                                Collections.sort(Least_Distance, new Comparator<LeastDistance>() {
+                                    @Override
+                                    public int compare(LeastDistance lhs, LeastDistance rhs) {
+                                        return lhs.distance < rhs.distance ? -1
+                                                : lhs.distance > rhs.distance ? 1
+                                                : 0;
+                                    }
+                                });
+
+                                for ( LeastDistance ld:Least_Distance) {
+                                    Log.i(" DP : " , "Dist :  " + String.valueOf(ld.distance) + "X : " + String.valueOf(ld.x) + " Y : " + String.valueOf(ld.y));
+                                }
+
+                                if(Least_Distance.size()>=2)
+                                {
+                                    //if both nearest distances are less than 15
+                                    if (Least_Distance.get(0).distance < leastDistanceRange && Least_Distance.get(1).distance < leastDistanceRange)
+                                    {
+                                        //Log.i("okay", "okay");
+
+                                        //calculate the euclidean distance for 2 least distance points
+                                        double ed0 = 0.0;
+                                        double ed1 = 0.0;
+                                        ed0 = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, Least_Distance.get(0).dlink7D28, Least_Distance.get(0).dlink7D8C, Least_Distance.get(0).dlink95A8);
+                                        ;
+                                        ed1 = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, Least_Distance.get(1).dlink7D28, Least_Distance.get(1).dlink7D8C, Least_Distance.get(1).dlink95A8);
+                                        ;
+                                        if (ed0 >= ed1) {
+                                            globalX = Least_Distance.get(0).x;
+                                            globalY = Least_Distance.get(0).y;
+                                        } else {
+                                            globalX = Least_Distance.get(1).x;
+                                            globalY = Least_Distance.get(1).y;
+                                        }
+                                        leastDistanceRange = 10.0;
+                                        countOutOfRangePositionCalculated=0;
+                                       // countOutOfRangePositionCalculated=0;
+                                    }
+                                    else
+                                    {
+                                        ///////////try with euclidean distance
+
+                                        countOutOfRangePositionCalculated++;
+
+                                        if(countOutOfRangePositionCalculated>=2)
                                         {
-                                            globalX = ld.x;
-                                            globalY = ld.y;
-                                            gotPositionFromLeastDist = true;
+                                            countOutOfRangePositionCalculated=0;
+                                            leastDistanceRange+=5;
+                                           /* //sort the euclidean list and ge the 3 least distances and get their mean, compare it with offline and get the position
+                                            Collections.sort(Euc_Distance_List, new Comparator<EuclideanDistance>() {
+                                                @Override
+                                                public int compare(EuclideanDistance lhs, EuclideanDistance rhs) {
+                                                    return lhs.distance < rhs.distance ? -1
+                                                            : lhs.distance > rhs.distance ? 1
+                                                            : 0;
+                                                }
+                                            });
+
+                                            for ( EuclideanDistance ld:Euc_Distance_List) {
+                                                Log.i(" DP : " , "Dist :  " + String.valueOf(ld.distance) + "X : " + String.valueOf(ld.x) + " Y : " + String.valueOf(ld.y));
+
+                                            }
+
+                                            globalX = Euc_Distance_List.get(0).x;
+                                            globalY = Euc_Distance_List.get(0).y;
+                                            countOutOfRangePositionCalculated=0;*/
                                         }
                                     }
                                 }
-
-                                if(!gotPositionFromLeastDist) {
-                                    //then compare the euclidean distance points
-                                    //List to store all off-line mean datapoints from parse into a list of class DataPoint
-                                    //checking if range checks returned any positions or not
-                                    if (Euclidean_Distance.size() > 0) {
-                                        //Log.i("IF  worked...", String.valueOf(Euclidean_Distance.size()));
-                                        //double leastDist = Euclidean_Distance.get(0).distance;
-                                        for (EuclideanDistance edLeast : Euclidean_Distance) {
-                                            //getting least euclidean distance from euclidean list
-                                            if (!(leastDist < edLeast.distance)) {
-                                                leastDist = edLeast.distance;
-                                                //assign x and y
-                                                globalX = edLeast.x;
-                                                globalY = edLeast.y;
-                                            }
-                                        }
+                                else {
+                                    //list is less than 2 so, show the nearest position
+                                    if (Least_Distance.get(0).distance < leastDistanceRange) {
+                                        //Log.i("ko", "ko");
+                                        globalX = Least_Distance.get(0).x;
+                                        globalY = Least_Distance.get(0).y;
                                     }
                                 }
                             }
-
-
-
-
-
  /////new code
 
 /////new code
@@ -951,6 +955,7 @@ public class SendDataTesting extends Activity {
                 feets++;
                 dp = (int)(dp * 100);
                 dp = (float)dp / (float)100d;
+                dp = findNearestNumber(possibleXValues,(float)dp);
             }
         }
         else if (dp > global)
@@ -969,6 +974,7 @@ public class SendDataTesting extends Activity {
                 feets++;
                 global = (int)(global * 100);
                 global = (float)global / (float)100d;
+                global = findNearestNumber(possibleXValues,(float)global);
             }
         }
         return feets;

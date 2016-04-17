@@ -8,5 +8,9 @@ public class LeastDistance {
     float x;
     int y;
     int globalY;
-    double globalX;
+    float globalX;
+    double dlink95A8;
+    double dlink7D28;
+    double dlink7D8C;
+    double euclideanDist;
 }
