@@ -64,7 +64,7 @@ public class SendDataTesting extends Activity {
 
     //constant X Point
     private static final int K_OUR_POINT = 26;
-    
+
     //range between last 2 Positions is 3 feets
     private static final int rangeBT2YPos = 8;
 
@@ -120,7 +120,7 @@ public class SendDataTesting extends Activity {
     //
     int countOutOfRangePositionCalculated = 0;
 
-//desk variables
+    //desk variables
     int offSetTopBorder = 72;
     int roomYLength = 28;
     int roomXLength = 38;
@@ -139,6 +139,17 @@ public class SendDataTesting extends Activity {
 
     int[] fineNumbers = {0,1,2,3};
 
+    //path draw varaiables
+    boolean pathDraw = false;
+    int[] pathArray;
+    int[] createdArray;
+    int globalNumberOfPaths = 0;
+    float xPositionPath = 0;
+    int yPositionPath = 0;
+    boolean letUserClickPath = false;
+    List<Integer> drawOnY ;
+
+    List<Float> drawOnX;
 
 
     @Override
@@ -198,6 +209,15 @@ public class SendDataTesting extends Activity {
             exec.scheduleWithFixedDelay(new UpdateLocation(), 0, delay, TimeUnit.MILLISECONDS);*/
 
 
+            //path draw threads...
+
+/*
+            ScheduledThreadPoolExecutor drawPathExec  = new ScheduledThreadPoolExecutor(5);
+
+
+            drawPathExec.scheduleWithFixedDelay(new DrawPath(),0,100, TimeUnit.MILLISECONDS);
+*/
+
 
 
         } catch (Exception ex) {
@@ -206,38 +226,48 @@ public class SendDataTesting extends Activity {
     }
 
 
+
+
+
+    MotionEvent finalEvent;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        finalEvent = event;
 
-            if(!gotInitialPosition)
-            {
+        SendDataTesting.this.runOnUiThread(new Runnable() {
+
+            @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+            public void run() {
+
+                // if(!gotInitialPosition) {
                 boolean isTouchError = false;
 
-                int x = (int) event.getX();
-                int y = (int) event.getY() - offSetTopBorder;
+                int x = (int) finalEvent.getX();
+                int y = (int) finalEvent.getY() - offSetTopBorder;
                 ImageView map = (ImageView) findViewById(R.id.Map);
                 float mapX = map.getLeft();
                 float mapY = map.getTop();
-    //        if(pathDraw == true)
-    //        {
-    //            pathArray = new int[3];
-    //            int count = 0;
-    //
-    //            while (count < 3) {
-    //                ImageView iv = new ImageView(this);
-    //                iv.setImageResource(R.drawable.path);
-    //                RelativeLayout rl = (RelativeLayout) findViewById(R.id.BackGround);
-    //
-    //                iv.setId(View.generateViewId());
-    //                pathArray[count] = iv.getId();
-    //                rl.addView(iv);
-    //
-    //                count++;
-    //            }
-    //
-    //
-    //            pathDraw = false;
-    //        }
+//        if(pathDraw == true)
+//        {
+//            pathArray = new int[3];
+//            int count = 0;
+//
+//            while (count < 3) {
+//                ImageView iv = new ImageView(this);
+//                iv.setImageResource(R.drawable.path);
+//                RelativeLayout rl = (RelativeLayout) findViewById(R.id.BackGround);
+//
+//                iv.setId(View.generateViewId());
+//                pathArray[count] = iv.getId();
+//                rl.addView(iv);
+//
+//                count++;
+//            }
+//
+//
+//            pathDraw = false;
+//        }
 
                 Xratio = (map.getRight() - map.getLeft()) / roomYLength;
                 Yratio = (map.getBottom() - map.getTop()) / roomXLength;
@@ -273,7 +303,7 @@ public class SendDataTesting extends Activity {
                     xPos = (int)(xPos*100);
                     xPos = (float)xPos/(float)100d;
 
-    //math the numbers to the closest of the possible number
+//math the numbers to the closest of the possible number
                     xPos = findNearestNumber(possibleXValues,xPos);
 
                     if (badDeskNumbers.contains(xPos) )
@@ -282,7 +312,7 @@ public class SendDataTesting extends Activity {
                         //check if the touch was on the desks
                         if (yPos < deskBorder) {
                             isTouchError = true;
-                            gotInitialPosition=false;
+
                         } else // if not default set to 26 for yPosition
                         {
                             yPos = sideYPos;
@@ -309,15 +339,96 @@ public class SendDataTesting extends Activity {
                     }
                     if (isTouchError != true) {
 
-
+                        if(!gotInitialPosition) {
                             globalX = xPos;
                             globalY = (int) yPos;
+/////////////////////////////////////////////////////////////
 
 
                             Log.i("X Pos...", String.valueOf(globalX));
                             Log.i("Y Pos...", String.valueOf(globalY));
                             gotInitialPosition = true;
+                        }
 
+                        //initilize the path
+
+                        if(letUserClickPath == true)
+                        {
+                            pathDraw = true;
+
+                            xPositionPath = xPos;
+                            yPositionPath = (int)yPos;
+
+                            int count =0;
+                            //first delete the old images
+                            if (createdArray != null) {
+                                while (count < createdArray.length) {
+                                    ImageView pathView = (ImageView) findViewById(createdArray[count]);
+                                    pathView.setVisibility(View.INVISIBLE);
+
+                                    count++;
+                                }
+                                createdArray = null;
+                                pathArray = null;
+                            }
+
+                            int amountOfPaths = 0;
+                            if(globalX == xPositionPath)
+                            {
+                                amountOfPaths += getYDistance(globalY, yPositionPath);
+                            }
+                            else
+                            {
+                                amountOfPaths += getYDistance(globalY, 26);
+                                amountOfPaths += getYDistance(yPositionPath, 26);
+                                amountOfPaths += getXDistance(globalX, xPositionPath);
+                            }
+                            globalNumberOfPaths = amountOfPaths;
+                            pathArray = new int[amountOfPaths];
+                            drawOnX = new ArrayList<Float>(amountOfPaths);
+                            drawOnY =new ArrayList<Integer>(amountOfPaths);
+                            count = 0;
+
+                            SendDataTesting.this.runOnUiThread(new Runnable() {
+
+                                @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+                                public void run()
+                                {
+                                    int count = 0;
+                                    while (count < pathArray.length)
+                                    {
+                                        ImageView pathView = new ImageView(SendDataTesting.this);
+                                        pathView.setImageResource(R.drawable.path);
+                                        RelativeLayout rl = (RelativeLayout) findViewById(R.id.Background);
+
+                                        pathView.setId(View.generateViewId());
+                                        pathArray[count] = pathView.getId();
+                                        pathView.setLeft(100 * (1 + count) + pathView.getLeft());
+                                        pathView.setRight(100 * (1 + count) + pathView.getRight());
+                                        pathView.setBottom(pathView.getBottom());
+                                        pathView.setTop(pathView.getTop());
+                                        rl.addView(pathView);
+
+                                        count++;
+                                    }
+
+                                    createdArray = pathArray;
+                                    letUserClickPath = false;
+
+                           /* TextView textX = (TextView) findViewById(R.id.XData);
+                            TextView textY = (TextView) findViewById(R.id.YData);
+                            textX.setText("" + xPositionPath);
+                            textY.setText("" + yPositionPath);*/
+                                }
+                            });
+                        }
+
+
+
+
+
+
+                        if(!firstStart) {
                             //map thread
                             ScheduledThreadPoolExecutor mapThread = new ScheduledThreadPoolExecutor(5);
                             mapThread.scheduleWithFixedDelay(new MapTask(), 0, 100, TimeUnit.MILLISECONDS);
@@ -329,28 +440,499 @@ public class SendDataTesting extends Activity {
                             long delay = 100;
                             exec.scheduleWithFixedDelay(new UpdateLocationTask(), 0, delay, TimeUnit.MILLISECONDS);
                             firstStart = true;
-
+                        }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     } else {
                         Toast.makeText(getBaseContext(), "Desk Touch Error", Toast.LENGTH_SHORT).show();
                     }
 
 
-            } else {
-                Toast.makeText(getBaseContext(), "Position Clicked Out Of Range", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getBaseContext(), "Position Clicked Out Of Range", Toast.LENGTH_SHORT).show();
+                }
+                //   }
             }
-        }
-
+        });
         return false;
     }
 
 
 
 
+    int numberOfClicks =0;
+    private void DrawPath()
+    {
+
+        SendDataTesting.this.runOnUiThread(new Runnable() {
+
+            @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+            public void run()
+            {
+
+                int count = 0;
+                int amountOfPaths = 0;
+                RelativeLayout deleteView = (RelativeLayout)findViewById(R.id.Background);
+
+                if(numberOfClicks >=0)
+                {
+
+////////////uP DATE the path finder if the user is moving
+                    if(pathDraw == true)
+                    {
+                        pathDraw = true;
+
+                        count =0;
+                        //first delete the old images
+                        if (createdArray != null) {
+                            while (count < createdArray.length) {
+                                ImageView pathView = (ImageView) findViewById(createdArray[count]);
+
+                                deleteView.removeView(pathView);
+                                count++;
+                            }
+                            createdArray = null;
+                            pathArray = null;
+                        }
+
+                        amountOfPaths = 0;
+
+                        //get the number of spots till destination
+                        if(globalX == xPositionPath)
+                        {
+                            amountOfPaths += getYDistance(globalY, yPositionPath);
+                        }
+                        else
+                        {
+                            amountOfPaths += getYDistance(globalY, 26);
+                            amountOfPaths += getYDistance(yPositionPath, 26);
+                            amountOfPaths += getXDistance(globalX, xPositionPath);
+                        }
+                        globalNumberOfPaths = amountOfPaths;
+                        pathArray = new int[amountOfPaths];
+                        drawOnX = new ArrayList<Float>(amountOfPaths);
+                        drawOnY =new ArrayList<Integer>(amountOfPaths);
+                        count = 0;
+
+                        SendDataTesting.this.runOnUiThread(new Runnable() {
+
+                            @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+                            public void run()
+                            {
+                                int count = 0;
+
+                                //create new path way images for the user
+                                while (count < pathArray.length)
+                                {
+                                    ImageView pathView = new ImageView(SendDataTesting.this);
+                                    pathView.setImageResource(R.drawable.path);
+                                    RelativeLayout rl = (RelativeLayout) findViewById(R.id.Background);
+
+                                    pathView.setId(View.generateViewId());
+                                    pathArray[count] = pathView.getId();
+
+
+                                    rl.addView(pathView);
+
+                                    count++;
+                                }
+
+                                createdArray = pathArray;
+                                letUserClickPath = false;
+
+                            }
+                        });
+                    }
+                    /////////////////////////////////////// ///////////////////////////////////////
+                    numberOfClicks =0;
+                }
+                numberOfClicks++;
+
+                count = 0;
+                if(pathDraw ==false && createdArray != null && pathArray != null)
+                {
+                    while (count < createdArray.length) {
+                        ImageView pathView = (ImageView) findViewById(createdArray[count]);
+                        deleteView.removeView(pathView);
+                        count++;
+                    }
+                    globalNumberOfPaths =0;
+                    createdArray = null;
+                    pathArray = null;
+                    xPositionPath = 0;
+                    yPositionPath = 0;
+
+                    letUserClickPath = false;
+                    pathDraw = false;
+                    Button button = (Button)findViewById(R.id.letPathFind);
+                    button.setText("Find Path");
+                }
+
+                count =0;
+                if(globalNumberOfPaths <= 2 && createdArray != null && pathArray != null )
+                {
+                    while (count < createdArray.length) {
+                        ImageView pathView = (ImageView) findViewById(createdArray[count]);
+                        deleteView.removeView(pathView);
+                        count++;
+                    }
+                    globalNumberOfPaths =0;
+                    createdArray = null;
+                    pathArray = null;
+                    xPositionPath = 0;
+                    yPositionPath = 0;
+
+                    letUserClickPath = false;
+                    pathDraw = false;
+                    Button button = (Button)findViewById(R.id.letPathFind);
+                    button.setText("Find Path");
+                    Toast.makeText(SendDataTesting.this, "You Have Reached Your Destination", Toast.LENGTH_SHORT).show();
+                }
+                count = 0;
+                if (pathArray != null && globalNumberOfPaths !=0)
+                {
+
+                    if(globalX == xPositionPath)
+                    {
+                        setPathY(globalY, yPositionPath,globalX);
+                    }
+                    else
+                    {
+                        setPathY(globalY, 26, globalX);
+                        setPathY(yPositionPath, 26, xPositionPath);
+                        setPathX(globalX, xPositionPath);
+                        // getXDistance(globalPersonX, xPositionPath);
+                    }
+                    while (count < pathArray.length) {
+                        int x = 0;
+                        int y = 0;
+                        ImageView map = (ImageView) findViewById(R.id.Map);
+                        Xratio = (map.getRight() - map.getLeft()) / roomYLength;
+                        Yratio = (map.getBottom() - map.getTop()) / roomXLength;
+                        ImageView pathView = (ImageView) findViewById(pathArray[count]);
+
+
+                       /* x = 12;
+                        y = 1+(count*1);*/
+                        //x and y the user has entered converted to integer
+                        String tmpX = drawOnX.get(count).toString();
+                        y = drawOnY.get(count);
+                        x = 0;
+                        //  pathView.setImageResource(R.drawable.pathver);
+                        if (tmpX.equals("0") || tmpX.equals("0.0"))
+                        {
+                           /* if(y == 26)
+                            {
+                                pathView.setImageResource(R.drawable.path);
+                            }
+                            else {*/
+                            //           pathView.setImageResource(R.drawable.pathhor);
+                            // }
+                            x = 2;
+                        }
+                        else if (tmpX.equals("0.1"))
+                        {
+                            x = 3;
+                        }
+                        else if (tmpX.equals("0.2"))
+                        {
+                            x = 4;
+                        }
+                        else if (tmpX.equals("0.3"))
+                        {
+                            x = 5;
+                        }
+                        else if (tmpX.equals("0.4"))
+                        {
+                            x = 6;
+                        }
+                        else if (tmpX.equals("0.5"))
+                        {
+                            x = 7;
+                        }
+                        else if (tmpX.equals("0.6"))
+                        {
+                            x = 8;
+                        }
+                        else if (tmpX.equals("0.7"))
+                        {
+                            x = 9;
+                        }
+                        else if (tmpX.equals("0.8"))
+                        {
+                            x = 10;
+                        }
+                        else if (tmpX.equals("0.9"))
+                        {
+                            x = 11;
+                        }
+                        else if (tmpX.equals("1") || tmpX.equals("1.0"))
+                        {
+                            /*if(y == 26)
+                            {
+                                pathView.setImageResource(R.drawable.path);
+                            }
+                            else {*/
+                            //     pathView.setImageResource(R.drawable.pathhor);
+                            // }
+                            x = 12;
+                        }
+                        else if (tmpX.equals("1.1"))
+                        {
+                            x = 13;
+                        }
+                        else if (tmpX.equals("1.2"))
+                        {
+                            x = 14;
+                        }
+                        else if (tmpX.equals("1.3"))
+                        {
+                            x = 15;
+                        }
+                        else if (tmpX.equals("1.4"))
+                        {
+                            x = 16;
+                        }
+                        else if (tmpX.equals("1.5"))
+                        {
+                            x = 17;
+                        }
+                        else if (tmpX.equals("1.6"))
+                        {
+                            x = 18;
+                        }
+                        else if (tmpX.equals("1.7"))
+                        {
+                            x = 19;
+                        }
+                        else if (tmpX.equals("1.8"))
+                        {
+                            x = 20;
+                        }
+                        else if (tmpX.equals("1.9"))
+                        {
+                            x = 21;
+                        }
+                        else if (tmpX.equals("1.95"))
+                        {
+                            x = 22;
+                        }
+                        else if (tmpX.equals("2") || tmpX.equals("2.0"))
+                        {
+                            /*if(y == 26)
+                            {
+                                pathView.setImageResource(R.drawable.path);
+                            }
+                            else {*/
+                            //      pathView.setImageResource(R.drawable.pathhor);
+                            //}
+                            x = 23;
+                        }
+                        else if (tmpX.equals("2.1"))
+                        {
+                            x = 24;
+                        }
+                        else if (tmpX.equals("2.2"))
+                        {
+                            x = 25;
+                        }
+                        else if (tmpX.equals("2.3"))
+                        {
+                            x = 26;
+                        }
+                        else if (tmpX.equals("2.4"))
+                        {
+                            x = 27;
+                        }
+                        else if (tmpX.equals("2.5"))
+                        {
+                            x = 28;
+                        }
+                        else if (tmpX.equals("2.6"))
+                        {
+                            x = 29;
+                        }
+                        else if (tmpX.equals("2.7"))
+                        {
+                            x = 30;
+                        }
+                        else if (tmpX.equals("2.8"))
+                        {
+                            x = 31;
+                        }
+                        else if (tmpX.equals("2.9"))
+                        {
+                            x = 32;
+                        }
+                        else if (tmpX.equals("3") || tmpX.equals("3.0"))
+                        {
+                           /* if(y == 26)
+                            {
+                                pathView.setImageResource(R.drawable.path);
+                            }
+                            else {*/
+                            //     pathView.setImageResource(R.drawable.pathhor);
+                            // }
+                            x = 34;
+                        }
+                        //do the math to get ratio to put on map
+                        x = x*Yratio;
+                        y = y*Xratio;
+
+                        //location of the person that is currently.
+                        int pathX = pathView.getLeft();
+                        int pathY = pathView.getTop();
+                        int pathXS = pathView.getRight();
+                        int pathYS = pathView.getBottom();
+
+                        int middleX = pathView.getLeft() + ((pathView.getRight() - pathView.getLeft()) / 2);
+                        int radX = ((pathView.getRight() - pathView.getLeft()) / 2);
+                        int middleY = pathView.getTop() + ((pathView.getBottom() - pathView.getTop()) / 2);
+                        int radY = ((pathView.getBottom() - pathView.getTop()) / 2);
+
+
+                        middleX = y;
+                        middleY = x;
+
+                        pathX = middleX - radX + map.getLeft();
+                        pathXS = middleX + radX + map.getLeft();
+                        pathY = middleY - radY + map.getTop();
+                        pathYS = middleY + radY + map.getTop();
+
+
+                        /*pathView.setLeft(pathX);
+                        pathView.setTop(pathY);
+                        pathView.setRight(pathXS);
+                        pathView.setBottom(pathYS);*/
+
+
+                        pathView.setX(pathX);
+                        pathView.setY(pathY);
+                        count++;
+                    }
+                }
 
 
 
+            }
+        });
+    }
 
 
+    Button PathButton;
+    public void PathButtonOnOff(View v) {
+
+        Button button = (Button) v;
+        PathButton = button;
+        SendDataTesting.this.runOnUiThread(new Runnable() {
+
+            @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+            public void run() {
+
+
+
+                if(PathButton.getText().toString() != "Delete Path" )
+                {
+                    letUserClickPath = true;
+                    PathButton.setText("Delete Path");
+                }
+                else
+                {
+                    letUserClickPath = false;
+                    pathDraw = false;
+                    PathButton.setText("Find Path");
+                }
+
+                drawPerson();
+            }
+        });
+
+    }
+    public void setPathY(int d1, int d2, float xP)
+    {
+        int count = 0;
+        while (d1 != d2)
+        {
+            if (d1 > d2)
+            {
+                count++;
+                d2++;
+                drawOnX.add(xP);
+                drawOnY.add(d2);
+            }
+            else if( d1 < d2)
+            {
+                count++;
+                d1++;
+                drawOnX.add(xP);
+                drawOnY.add(d1);
+            }
+
+
+        }
+
+    }
+    public void setPathX(float person, float destination)
+    {
+        int feets = 0;
+        if (person > destination)
+        {
+            while (destination < person)
+            {
+                if (Float.compare(destination,1.9f) == 0)
+                {
+                    feets++;
+                    if(Float.compare(person,1.95f) == 0)
+                    {
+                        drawOnX.add(person);
+                        drawOnY.add(26);
+                        break;
+
+                    }
+                }
+                if(Float.compare(destination,1.9f) == 0 && Float.compare(destination + 0.1f,2.0f) ==0)
+                {
+                    drawOnX.add(1.95f);
+                    drawOnY.add(26);
+                }
+                destination += 0.1f;
+                feets++;
+                destination = (int)(destination * 100);
+                destination = (float)destination / (float)100d;
+                destination = findNearestNumber(possibleXValues,(float)destination);
+                drawOnX.add(destination);
+                drawOnY.add(26);
+            }
+        }
+        else if (destination > person)
+        {
+            while (person < destination)
+            {
+                if (Float.compare(person,1.9f) == 0)
+                {
+                    feets++;
+                    if (1.95 == destination)
+                    {
+                        drawOnX.add(1.95f);
+                        drawOnY.add(26);
+                        break;
+                    }
+                }
+                if(Float.compare(person,1.9f) == 0 && Float.compare(person + 0.1f,2.0f) ==0)
+                {
+                    drawOnX.add(1.95f);
+                    drawOnY.add(26);
+                }
+                person += 0.1f;
+                feets++;
+                person = (int)(person * 100);
+                person = (float)person / (float)100d;
+                person = findNearestNumber(possibleXValues,(float)person);
+                drawOnX.add(person);
+                drawOnY.add(26);
+            }
+        }
+        //  return feets;
+    }
 
     public float findNearestNumber(float[] array,float myNumber)
     {
@@ -408,141 +990,152 @@ public class SendDataTesting extends Activity {
                 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
                 public void run() {
 
-                    SendDataTesting.this.runOnUiThread(new Runnable() {
+                    drawPerson();
 
-                        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-                        public void run() {
-
-                            ImageView map = (ImageView) findViewById(R.id.Map);
-                            Xratio = (map.getRight() - map.getLeft()) / 28;
-                            Yratio = (map.getBottom() - map.getTop()) / 38;
-
-
-                            ImageView person = (ImageView) findViewById(R.id.Person);
-
-                            //x and y the user has entered converted to integer
-                            // this is the number that comes from the data
-                            globalX = (int) (globalX * 100);
-                            globalX = (float) globalX / (float) 100d;
-                            globalX = findNearestNumber(possibleXValues, globalX);
-                            String tmpX = String.valueOf(globalX);
-                            int y = globalY;// this is the number that comes from the data
-                            int x = 0;
-                            if (tmpX.equals("0") || tmpX.equals("0.0")) {
-                                x = 2;
-                            } else if (tmpX.equals("0.1")) {
-                                x = 3;
-                            } else if (tmpX.equals("0.2")) {
-                                x = 4;
-                            } else if (tmpX.equals("0.3")) {
-                                x = 5;
-                            } else if (tmpX.equals("0.4")) {
-                                x = 6;
-                            } else if (tmpX.equals("0.5")) {
-                                x = 7;
-                            } else if (tmpX.equals("0.6")) {
-                                x = 8;
-                            } else if (tmpX.equals("0.7")) {
-                                x = 9;
-                            } else if (tmpX.equals("0.8")) {
-                                x = 10;
-                            } else if (tmpX.equals("0.9")) {
-                                x = 11;
-                            } else if (tmpX.equals("1") || tmpX.equals("1.0")) {
-                                x = 12;
-                            } else if (tmpX.equals("1.1")) {
-                                x = 13;
-                            } else if (tmpX.equals("1.2")) {
-                                x = 14;
-                            } else if (tmpX.equals("1.3")) {
-                                x = 15;
-                            } else if (tmpX.equals("1.4")) {
-                                x = 16;
-                            } else if (tmpX.equals("1.5")) {
-                                x = 17;
-                            } else if (tmpX.equals("1.6")) {
-                                x = 18;
-                            } else if (tmpX.equals("1.7")) {
-                                x = 19;
-                            } else if (tmpX.equals("1.8")) {
-                                x = 20;
-                            } else if (tmpX.equals("1.9")) {
-                                x = 21;
-                            } else if (tmpX.equals("1.95")) {
-                                x = 22;
-                            } else if (tmpX.equals("2") || tmpX.equals("2.0")) {
-                                x = 23;
-                            } else if (tmpX.equals("2.1")) {
-                                x = 24;
-                            } else if (tmpX.equals("2.2")) {
-                                x = 25;
-                            } else if (tmpX.equals("2.3")) {
-                                x = 26;
-                            } else if (tmpX.equals("2.4")) {
-                                x = 27;
-                            } else if (tmpX.equals("2.5")) {
-                                x = 28;
-                            } else if (tmpX.equals("2.6")) {
-                                x = 29;
-                            } else if (tmpX.equals("2.7")) {
-                                x = 30;
-                            } else if (tmpX.equals("2.8")) {
-                                x = 31;
-                            } else if (tmpX.equals("2.9")) {
-                                x = 32;
-                            } else if (tmpX.equals("3") || tmpX.equals("3.0")) {
-                                x = 34;
-                            } else {
-                                //print tmpX and y
-                                Toast.makeText(getBaseContext(), "wrong : " + tmpX + "  y:" + String.valueOf(y), Toast.LENGTH_SHORT).show();
-                            }
-
-                            //do the math to get ratio to put on map
-                            x = x * Yratio;
-                            y = y * Xratio;
-
-                            //location of the person that is currently.
-                            int personX = person.getLeft();
-                            int personY = person.getTop();
-                            int personXS = person.getRight();
-                            int personYS = person.getBottom();
-
-                            int middleX = person.getLeft() + ((person.getRight() - person.getLeft()) / 2);
-                            int radX = ((person.getRight() - person.getLeft()) / 2);
-                            int middleY = person.getTop() + ((person.getBottom() - person.getTop()) / 2);
-                            int radY = ((person.getBottom() - person.getTop()) / 2);
-
-
-                            middleX = y;
-                            middleY = x;
-
-                            personX = middleX - radX + map.getLeft();
-                            personXS = middleX + radX + map.getLeft();
-                            personY = middleY - radY + map.getTop();
-                            personYS = middleY + radY + map.getTop();
-
-
-                            person.setLeft(personX);
-                            person.setTop(personY);
-                            person.setRight(personXS);
-                            person.setBottom(personYS);
-                  /*  if (person.getVisibility() == View.VISIBLE) {
-                        person.setVisibility(View.INVISIBLE);
-                    } else {
-                        person.setVisibility(View.VISIBLE);
-                    }*/
-
-
-                        }
-                    });
-
-
+                    //draw path accoriding to user's current position : gloabal x and globaly
+                    DrawPath();
                 }
             });
         }
     }
 
 
+    void drawPerson(){
+        SendDataTesting.this.runOnUiThread(new Runnable() {
+
+            @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+            public void run() {
+
+                ImageView map = (ImageView) findViewById(R.id.Map);
+                Xratio = (map.getRight() - map.getLeft()) / 28;
+                Yratio = (map.getBottom() - map.getTop()) / 38;
+
+
+                ImageView person = (ImageView) findViewById(R.id.Person);
+
+                //x and y the user has entered converted to integer
+                // this is the number that comes from the data
+                globalX = (int) (globalX * 100);
+                globalX = (float) globalX / (float) 100d;
+                globalX = findNearestNumber(possibleXValues, globalX);
+                String tmpX = String.valueOf(globalX);
+                int y = globalY;// this is the number that comes from the data
+                int x = 0;
+                if (tmpX.equals("0") || tmpX.equals("0.0")) {
+                    x = 2;
+                } else if (tmpX.equals("0.1")) {
+                    x = 3;
+                } else if (tmpX.equals("0.2")) {
+                    x = 4;
+                } else if (tmpX.equals("0.3")) {
+                    x = 5;
+                } else if (tmpX.equals("0.4")) {
+                    x = 6;
+                } else if (tmpX.equals("0.5")) {
+                    x = 7;
+                } else if (tmpX.equals("0.6")) {
+                    x = 8;
+                } else if (tmpX.equals("0.7")) {
+                    x = 9;
+                } else if (tmpX.equals("0.8")) {
+                    x = 10;
+                } else if (tmpX.equals("0.9")) {
+                    x = 11;
+                } else if (tmpX.equals("1") || tmpX.equals("1.0")) {
+                    x = 12;
+                } else if (tmpX.equals("1.1")) {
+                    x = 13;
+                } else if (tmpX.equals("1.2")) {
+                    x = 14;
+                } else if (tmpX.equals("1.3")) {
+                    x = 15;
+                } else if (tmpX.equals("1.4")) {
+                    x = 16;
+                } else if (tmpX.equals("1.5")) {
+                    x = 17;
+                } else if (tmpX.equals("1.6")) {
+                    x = 18;
+                } else if (tmpX.equals("1.7")) {
+                    x = 19;
+                } else if (tmpX.equals("1.8")) {
+                    x = 20;
+                } else if (tmpX.equals("1.9")) {
+                    x = 21;
+                } else if (tmpX.equals("1.95")) {
+                    x = 22;
+                } else if (tmpX.equals("2") || tmpX.equals("2.0")) {
+                    x = 23;
+                } else if (tmpX.equals("2.1")) {
+                    x = 24;
+                } else if (tmpX.equals("2.2")) {
+                    x = 25;
+                } else if (tmpX.equals("2.3")) {
+                    x = 26;
+                } else if (tmpX.equals("2.4")) {
+                    x = 27;
+                } else if (tmpX.equals("2.5")) {
+                    x = 28;
+                } else if (tmpX.equals("2.6")) {
+                    x = 29;
+                } else if (tmpX.equals("2.7")) {
+                    x = 30;
+                } else if (tmpX.equals("2.8")) {
+                    x = 31;
+                } else if (tmpX.equals("2.9")) {
+                    x = 32;
+                } else if (tmpX.equals("3") || tmpX.equals("3.0")) {
+                    x = 34;
+                } else {
+                    //print tmpX and y
+                    Toast.makeText(getBaseContext(), "wrong : " + tmpX + "  y:" + String.valueOf(y), Toast.LENGTH_SHORT).show();
+                }
+
+                //do the math to get ratio to put on map
+                x = x * Yratio;
+                y = y * Xratio;
+
+                //location of the person that is currently.
+                int personX = person.getLeft();
+                int personY = person.getTop();
+                int personXS = person.getRight();
+                int personYS = person.getBottom();
+
+                int middleX = person.getLeft() + ((person.getRight() - person.getLeft()) / 2);
+                int radX = ((person.getRight() - person.getLeft()) / 2);
+                int middleY = person.getTop() + ((person.getBottom() - person.getTop()) / 2);
+                int radY = ((person.getBottom() - person.getTop()) / 2);
+
+
+                middleX = y;
+                middleY = x;
+
+                personX = middleX - radX + map.getLeft();
+                personXS = middleX + radX + map.getLeft();
+                personY = middleY - radY + map.getTop();
+                personYS = middleY + radY + map.getTop();
+
+
+                /*person.setLeft(personX);
+                person.setTop(personY);
+                person.setRight(personXS);
+                person.setBottom(personYS);*/
+                  /*  if (person.getVisibility() == View.VISIBLE) {
+                        person.setVisibility(View.INVISIBLE);
+                    } else {
+                        person.setVisibility(View.VISIBLE);
+                    }*/
+                person.setX(personX);
+                person.setY(personY);
+
+            }
+        });
+
+
+
+
+
+
+    }
 
     @Override
     protected void onResume() {
@@ -732,7 +1325,7 @@ public class SendDataTesting extends Activity {
                                         }
                                         leastDistanceRange = 10.0;
                                         countOutOfRangePositionCalculated=0;
-                                       // countOutOfRangePositionCalculated=0;
+                                        // countOutOfRangePositionCalculated=0;
                                     }
                                     else
                                     {
@@ -774,7 +1367,7 @@ public class SendDataTesting extends Activity {
                                     }
                                 }
                             }
- /////new code
+                            /////new code
 
 /////new code
 
@@ -1147,7 +1740,7 @@ public class SendDataTesting extends Activity {
     }
 
 
-     private class MeanTask extends AsyncTask<Void,Void,String>{
+    private class MeanTask extends AsyncTask<Void,Void,String>{
         @Override
         protected String doInBackground(Void... params) {
 
