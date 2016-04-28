@@ -170,55 +170,9 @@ public class SendDataTesting extends Activity {
             Looper looper = handlerThread.getLooper();
             Handler handler = new Handler(looper);
 
-
-
             registerReceiver(wifiReciever, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION), null, handler);
 
-/*            //get the mean from parse and store it in a list of DataPoint class in a thread
-            Thread th1 = new Thread(new getMeanFromParse());
-            //start the thread
-            th1.start();*/
-
             new MeanTask().execute();
-
-            //wait for this thread to get all data and die
-            //th1.join();
-
-/*            Toast.makeText(this,"Got all data",Toast.LENGTH_SHORT).show();*/
-
-
-
-
-/*            //Update Location thread
-            Thread updateLocationThread = new Thread( new UpdateLocation());
-            updateLocationThread.start();*/
-
-
-
-      /*      //problems are the old created threads will show the old location for a new position...
-            Thread realTimeDP = new Thread(new CreateNewUpdateLocationThreads());
-            realTimeDP.start();*/
-
-/*            //map thread
-            ScheduledThreadPoolExecutor mapThread = new ScheduledThreadPoolExecutor(5);
-            mapThread.scheduleWithFixedDelay(new MyTask(), 0, 200, TimeUnit.MILLISECONDS);
-
-            //can be in one single thread instead of calling it every 2 seconds.
-            ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-            long delay = 200;
-            exec.scheduleWithFixedDelay(new UpdateLocation(), 0, delay, TimeUnit.MILLISECONDS);*/
-
-
-            //path draw threads...
-
-/*
-            ScheduledThreadPoolExecutor drawPathExec  = new ScheduledThreadPoolExecutor(5);
-
-
-            drawPathExec.scheduleWithFixedDelay(new DrawPath(),0,100, TimeUnit.MILLISECONDS);
-*/
-
-
 
         } catch (Exception ex) {
             Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
@@ -248,26 +202,7 @@ public class SendDataTesting extends Activity {
                 ImageView map = (ImageView) findViewById(R.id.Map);
                 float mapX = map.getLeft();
                 float mapY = map.getTop();
-//        if(pathDraw == true)
-//        {
-//            pathArray = new int[3];
-//            int count = 0;
-//
-//            while (count < 3) {
-//                ImageView iv = new ImageView(this);
-//                iv.setImageResource(R.drawable.path);
-//                RelativeLayout rl = (RelativeLayout) findViewById(R.id.BackGround);
-//
-//                iv.setId(View.generateViewId());
-//                pathArray[count] = iv.getId();
-//                rl.addView(iv);
-//
-//                count++;
-//            }
-//
-//
-//            pathDraw = false;
-//        }
+
 
                 Xratio = (map.getRight() - map.getLeft()) / roomYLength;
                 Yratio = (map.getBottom() - map.getTop()) / roomXLength;
@@ -414,19 +349,9 @@ public class SendDataTesting extends Activity {
 
                                     createdArray = pathArray;
                                     letUserClickPath = false;
-
-                           /* TextView textX = (TextView) findViewById(R.id.XData);
-                            TextView textY = (TextView) findViewById(R.id.YData);
-                            textX.setText("" + xPositionPath);
-                            textY.setText("" + yPositionPath);*/
                                 }
                             });
                         }
-
-
-
-
-
 
                         if(!firstStart) {
                             //map thread
@@ -450,13 +375,32 @@ public class SendDataTesting extends Activity {
                 } else {
                     Toast.makeText(getBaseContext(), "Position Clicked Out Of Range", Toast.LENGTH_SHORT).show();
                 }
-                //   }
             }
         });
         return false;
     }
 
+    //this function is to match numbers with their feet such as 0.5 as 7 feet
+    public int NumberMatch(String number) {
+        int x = 2;
+        int oddNumberOut = 33;
+        int lastPossibleNumber = 34;
 
+        for (int i = 0; i < possibleXValues.length; i++) {
+            // Log.i("MyActivity", "x= " + x);
+            if (number.equals(String.valueOf(possibleXValues[i]))) {
+                //    Log.i("MyActivity", "got x= " + x);
+                break;
+            }
+            x++;
+        }
+        if (x == oddNumberOut) {
+            //Log.i("MyActivity", "changed x= " + x);
+            x = lastPossibleNumber;
+            //Log.i("MyActivity", "to x= " + x);
+        }
+        return  x;
+    }
 
 
     int numberOfClicks =0;
@@ -471,7 +415,8 @@ public class SendDataTesting extends Activity {
 
                 int count = 0;
                 int amountOfPaths = 0;
-                RelativeLayout deleteView = (RelativeLayout)findViewById(R.id.Background);
+                RelativeLayout deleteView = (RelativeLayout) findViewById(R.id.Background);
+                boolean drawSecondOption = false;
 
                 if(numberOfClicks >=0)
                 {
@@ -490,6 +435,8 @@ public class SendDataTesting extends Activity {
                                 deleteView.removeView(pathView);
                                 count++;
                             }
+                            ImageView destImage = (ImageView) findViewById(R.id.FinalDestinationImage);
+                            destImage.setVisibility(View.INVISIBLE);
                             createdArray = null;
                             pathArray = null;
                         }
@@ -529,16 +476,11 @@ public class SendDataTesting extends Activity {
 
                                     pathView.setId(View.generateViewId());
                                     pathArray[count] = pathView.getId();
-
-
                                     rl.addView(pathView);
-
                                     count++;
                                 }
-
                                 createdArray = pathArray;
                                 letUserClickPath = false;
-
                             }
                         });
                     }
@@ -555,6 +497,8 @@ public class SendDataTesting extends Activity {
                         deleteView.removeView(pathView);
                         count++;
                     }
+                    ImageView destImage = (ImageView) findViewById(R.id.FinalDestinationImage);
+                    destImage.setVisibility(View.INVISIBLE);
                     globalNumberOfPaths =0;
                     createdArray = null;
                     pathArray = null;
@@ -575,6 +519,8 @@ public class SendDataTesting extends Activity {
                         deleteView.removeView(pathView);
                         count++;
                     }
+                    ImageView destImage = (ImageView) findViewById(R.id.FinalDestinationImage);
+                    destImage.setVisibility(View.INVISIBLE);
                     globalNumberOfPaths =0;
                     createdArray = null;
                     pathArray = null;
@@ -610,169 +556,32 @@ public class SendDataTesting extends Activity {
                         Yratio = (map.getBottom() - map.getTop()) / roomXLength;
                         ImageView pathView = (ImageView) findViewById(pathArray[count]);
 
-
-                       /* x = 12;
-                        y = 1+(count*1);*/
                         //x and y the user has entered converted to integer
                         String tmpX = drawOnX.get(count).toString();
                         y = drawOnY.get(count);
                         x = 0;
-                        //  pathView.setImageResource(R.drawable.pathver);
-                        if (tmpX.equals("0") || tmpX.equals("0.0"))
+
+                        x = NumberMatch(tmpX);
+//Draw the image to final spot
+                        float compareX = Float.parseFloat(tmpX);
+                        compareX = findNearestNumber(possibleXValues, compareX);
+
+                        ImageView destImage = (ImageView) findViewById(R.id.FinalDestinationImage);
+                        destImage.setVisibility(View.INVISIBLE);
+                        if(numberOfClicks >= 1)
                         {
-                           /* if(y == 26)
+                            if(y == yPositionPath && compareX == xPositionPath)
                             {
-                                pathView.setImageResource(R.drawable.path);
+                                pathView.setImageResource(R.drawable.pathdest);
+                                destImage.setVisibility(View.INVISIBLE);
+                                drawSecondOption = false;
+                                numberOfClicks =0;
                             }
-                            else {*/
-                            //           pathView.setImageResource(R.drawable.pathhor);
-                            // }
-                            x = 2;
-                        }
-                        else if (tmpX.equals("0.1"))
-                        {
-                            x = 3;
-                        }
-                        else if (tmpX.equals("0.2"))
-                        {
-                            x = 4;
-                        }
-                        else if (tmpX.equals("0.3"))
-                        {
-                            x = 5;
-                        }
-                        else if (tmpX.equals("0.4"))
-                        {
-                            x = 6;
-                        }
-                        else if (tmpX.equals("0.5"))
-                        {
-                            x = 7;
-                        }
-                        else if (tmpX.equals("0.6"))
-                        {
-                            x = 8;
-                        }
-                        else if (tmpX.equals("0.7"))
-                        {
-                            x = 9;
-                        }
-                        else if (tmpX.equals("0.8"))
-                        {
-                            x = 10;
-                        }
-                        else if (tmpX.equals("0.9"))
-                        {
-                            x = 11;
-                        }
-                        else if (tmpX.equals("1") || tmpX.equals("1.0"))
-                        {
-                            /*if(y == 26)
+                            else
                             {
-                                pathView.setImageResource(R.drawable.path);
+                                drawSecondOption = true;
+
                             }
-                            else {*/
-                            //     pathView.setImageResource(R.drawable.pathhor);
-                            // }
-                            x = 12;
-                        }
-                        else if (tmpX.equals("1.1"))
-                        {
-                            x = 13;
-                        }
-                        else if (tmpX.equals("1.2"))
-                        {
-                            x = 14;
-                        }
-                        else if (tmpX.equals("1.3"))
-                        {
-                            x = 15;
-                        }
-                        else if (tmpX.equals("1.4"))
-                        {
-                            x = 16;
-                        }
-                        else if (tmpX.equals("1.5"))
-                        {
-                            x = 17;
-                        }
-                        else if (tmpX.equals("1.6"))
-                        {
-                            x = 18;
-                        }
-                        else if (tmpX.equals("1.7"))
-                        {
-                            x = 19;
-                        }
-                        else if (tmpX.equals("1.8"))
-                        {
-                            x = 20;
-                        }
-                        else if (tmpX.equals("1.9"))
-                        {
-                            x = 21;
-                        }
-                        else if (tmpX.equals("1.95"))
-                        {
-                            x = 22;
-                        }
-                        else if (tmpX.equals("2") || tmpX.equals("2.0"))
-                        {
-                            /*if(y == 26)
-                            {
-                                pathView.setImageResource(R.drawable.path);
-                            }
-                            else {*/
-                            //      pathView.setImageResource(R.drawable.pathhor);
-                            //}
-                            x = 23;
-                        }
-                        else if (tmpX.equals("2.1"))
-                        {
-                            x = 24;
-                        }
-                        else if (tmpX.equals("2.2"))
-                        {
-                            x = 25;
-                        }
-                        else if (tmpX.equals("2.3"))
-                        {
-                            x = 26;
-                        }
-                        else if (tmpX.equals("2.4"))
-                        {
-                            x = 27;
-                        }
-                        else if (tmpX.equals("2.5"))
-                        {
-                            x = 28;
-                        }
-                        else if (tmpX.equals("2.6"))
-                        {
-                            x = 29;
-                        }
-                        else if (tmpX.equals("2.7"))
-                        {
-                            x = 30;
-                        }
-                        else if (tmpX.equals("2.8"))
-                        {
-                            x = 31;
-                        }
-                        else if (tmpX.equals("2.9"))
-                        {
-                            x = 32;
-                        }
-                        else if (tmpX.equals("3") || tmpX.equals("3.0"))
-                        {
-                           /* if(y == 26)
-                            {
-                                pathView.setImageResource(R.drawable.path);
-                            }
-                            else {*/
-                            //     pathView.setImageResource(R.drawable.pathhor);
-                            // }
-                            x = 34;
                         }
                         //do the math to get ratio to put on map
                         x = x*Yratio;
@@ -789,7 +598,6 @@ public class SendDataTesting extends Activity {
                         int middleY = pathView.getTop() + ((pathView.getBottom() - pathView.getTop()) / 2);
                         int radY = ((pathView.getBottom() - pathView.getTop()) / 2);
 
-
                         middleX = y;
                         middleY = x;
 
@@ -798,21 +606,55 @@ public class SendDataTesting extends Activity {
                         pathY = middleY - radY + map.getTop();
                         pathYS = middleY + radY + map.getTop();
 
-
-                        /*pathView.setLeft(pathX);
-                        pathView.setTop(pathY);
-                        pathView.setRight(pathXS);
-                        pathView.setBottom(pathYS);*/
-
-
                         pathView.setX(pathX);
                         pathView.setY(pathY);
                         count++;
                     }
+                    if(drawSecondOption)
+                    {
+                        ImageView destImage = (ImageView) findViewById(R.id.FinalDestinationImage);
+                        ImageView map = (ImageView) findViewById(R.id.Map);
+                        Xratio = (map.getRight() - map.getLeft()) / roomYLength;
+                        Yratio = (map.getBottom() - map.getTop()) / roomXLength;
+
+                        destImage.setVisibility(View.VISIBLE);
+                                   /* x = 12;
+                                    y = 1+(count*1);*/
+                        //x and y the user has entered converted to integer
+                        String tmpX = String.valueOf(xPositionPath);
+                        int y = yPositionPath;
+                        int x = NumberMatch(tmpX);
+
+
+
+                        //do the math to get ratio to put on map
+                        x = x*Yratio;
+                        y = y*Xratio;
+
+                        //location of the person that is currently.
+                        int pathX = destImage.getLeft();
+                        int pathY = destImage.getTop();
+
+                        int middleX = destImage.getLeft() + ((destImage.getRight() - destImage.getLeft()) / 2);
+                        int radX = ((destImage.getRight() - destImage.getLeft()) / 2);
+                        int middleY = destImage.getTop() + ((destImage.getBottom() - destImage.getTop()) / 2);
+                        int radY = ((destImage.getBottom() - destImage.getTop()) / 2);
+
+
+                        middleX = y;
+                        middleY = x;
+
+                        pathX = middleX - radX + map.getLeft();
+                        pathY = middleY - radY + map.getTop();
+
+                        destImage.setX(pathX);
+                        destImage.setY(pathY);
+                        drawSecondOption = false;
+                    }
+
+                    int numberofchilds = deleteView.getChildCount();
+                    Log.i("MainActivity", "count = " + numberofchilds);
                 }
-
-
-
             }
         });
     }
@@ -828,8 +670,6 @@ public class SendDataTesting extends Activity {
             @TargetApi(Build.VERSION_CODES.HONEYCOMB)
             public void run() {
 
-
-
                 if(PathButton.getText().toString() != "Delete Path" )
                 {
                     letUserClickPath = true;
@@ -841,7 +681,6 @@ public class SendDataTesting extends Activity {
                     pathDraw = false;
                     PathButton.setText("Find Path");
                 }
-
                 drawPerson();
             }
         });
@@ -854,10 +693,11 @@ public class SendDataTesting extends Activity {
         {
             if (d1 > d2)
             {
-                count++;
-                d2++;
+
                 drawOnX.add(xP);
                 drawOnY.add(d2);
+                count++;
+                d2++;
             }
             else if( d1 < d2)
             {
@@ -866,8 +706,6 @@ public class SendDataTesting extends Activity {
                 drawOnX.add(xP);
                 drawOnY.add(d1);
             }
-
-
         }
 
     }
@@ -886,7 +724,6 @@ public class SendDataTesting extends Activity {
                         drawOnX.add(person);
                         drawOnY.add(26);
                         break;
-
                     }
                 }
                 if(Float.compare(destination,1.9f) == 0 && Float.compare(destination + 0.1f,2.0f) ==0)
@@ -1021,74 +858,7 @@ public class SendDataTesting extends Activity {
                 String tmpX = String.valueOf(globalX);
                 int y = globalY;// this is the number that comes from the data
                 int x = 0;
-                if (tmpX.equals("0") || tmpX.equals("0.0")) {
-                    x = 2;
-                } else if (tmpX.equals("0.1")) {
-                    x = 3;
-                } else if (tmpX.equals("0.2")) {
-                    x = 4;
-                } else if (tmpX.equals("0.3")) {
-                    x = 5;
-                } else if (tmpX.equals("0.4")) {
-                    x = 6;
-                } else if (tmpX.equals("0.5")) {
-                    x = 7;
-                } else if (tmpX.equals("0.6")) {
-                    x = 8;
-                } else if (tmpX.equals("0.7")) {
-                    x = 9;
-                } else if (tmpX.equals("0.8")) {
-                    x = 10;
-                } else if (tmpX.equals("0.9")) {
-                    x = 11;
-                } else if (tmpX.equals("1") || tmpX.equals("1.0")) {
-                    x = 12;
-                } else if (tmpX.equals("1.1")) {
-                    x = 13;
-                } else if (tmpX.equals("1.2")) {
-                    x = 14;
-                } else if (tmpX.equals("1.3")) {
-                    x = 15;
-                } else if (tmpX.equals("1.4")) {
-                    x = 16;
-                } else if (tmpX.equals("1.5")) {
-                    x = 17;
-                } else if (tmpX.equals("1.6")) {
-                    x = 18;
-                } else if (tmpX.equals("1.7")) {
-                    x = 19;
-                } else if (tmpX.equals("1.8")) {
-                    x = 20;
-                } else if (tmpX.equals("1.9")) {
-                    x = 21;
-                } else if (tmpX.equals("1.95")) {
-                    x = 22;
-                } else if (tmpX.equals("2") || tmpX.equals("2.0")) {
-                    x = 23;
-                } else if (tmpX.equals("2.1")) {
-                    x = 24;
-                } else if (tmpX.equals("2.2")) {
-                    x = 25;
-                } else if (tmpX.equals("2.3")) {
-                    x = 26;
-                } else if (tmpX.equals("2.4")) {
-                    x = 27;
-                } else if (tmpX.equals("2.5")) {
-                    x = 28;
-                } else if (tmpX.equals("2.6")) {
-                    x = 29;
-                } else if (tmpX.equals("2.7")) {
-                    x = 30;
-                } else if (tmpX.equals("2.8")) {
-                    x = 31;
-                } else if (tmpX.equals("2.9")) {
-                    x = 32;
-                } else if (tmpX.equals("3") || tmpX.equals("3.0")) {
-                    x = 34;
-                } else {
-                    //print tmpX and y
-                    Toast.makeText(getBaseContext(), "wrong : " + tmpX + "  y:" + String.valueOf(y), Toast.LENGTH_SHORT).show();
-                }
+                x = NumberMatch(tmpX);
 
                 //do the math to get ratio to put on map
                 x = x * Yratio;
@@ -1113,24 +883,12 @@ public class SendDataTesting extends Activity {
                 personXS = middleX + radX + map.getLeft();
                 personY = middleY - radY + map.getTop();
                 personYS = middleY + radY + map.getTop();
-
-
-                /*person.setLeft(personX);
-                person.setTop(personY);
-                person.setRight(personXS);
-                person.setBottom(personYS);*/
-                  /*  if (person.getVisibility() == View.VISIBLE) {
-                        person.setVisibility(View.INVISIBLE);
-                    } else {
-                        person.setVisibility(View.VISIBLE);
-                    }*/
                 person.setX(personX);
                 person.setY(personY);
 
             }
         });
 
-        //hh
 
 
 
@@ -1251,7 +1009,6 @@ public class SendDataTesting extends Activity {
                                         eucD.distance = EuclDistance;
                                         eucD.x = dp.xPos;
                                         eucD.y = dp.yPos;
-                                        /*Log.i(" DP : " , "Dist :  " + String.valueOf(ldist.distance) + "X : " + String.valueOf(ldist.x) + " Y : " + String.valueOf(ldist.y));*/
 
                                         //current x and y
                                         ldist.globalX = globalX;
@@ -1260,29 +1017,6 @@ public class SendDataTesting extends Activity {
                                         Least_Distance.add(ldist);
 
                                         break;
-
-/////new code
-
-                                      /*  //Eculidean Distance Code
-                                        double euclideanDist = 0.0;
-
-                                        //create an instance of EuclideanDistance class
-                                        EuclideanDistance ed = new EuclideanDistance();
-
-                                        //calculate the Euclidean distance between observed and recorded values
-                                        euclideanDist = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, dp.dlink7D28, dp.dlink7D8C, dp.dlink95A8);
-
-                                        ed.distance = euclideanDist;
-                                        ed.x = dp.xPos;
-                                        ed.y = dp.yPos;
-                                        ed.dlink7D28 = threadMeanOfRouter7D28;
-                                        ed.dlink7D8C = threadMeanOfRouter7D8C;
-                                        ed.dlink95A8 = threadMeanOfRouter95A8;
-                                        Euclidean_Distance.add(ed);
-
-                                        //this line could fuck up, think about it
-                                        //did modify this
-                                        break;*/
                                     }
                                 }
                             }
@@ -1309,7 +1043,6 @@ public class SendDataTesting extends Activity {
                                     //if both nearest distances are less than 15
                                     if (Least_Distance.get(0).distance < leastDistanceRange && Least_Distance.get(1).distance < leastDistanceRange)
                                     {
-                                        //Log.i("okay", "okay");
 
                                         //calculate the euclidean distance for 2 least distance points
                                         double ed0 = 0.0;
@@ -1327,7 +1060,6 @@ public class SendDataTesting extends Activity {
                                         }
                                         leastDistanceRange = 10.0;
                                         countOutOfRangePositionCalculated=0;
-                                        // countOutOfRangePositionCalculated=0;
                                     }
                                     else
                                     {
@@ -1339,175 +1071,17 @@ public class SendDataTesting extends Activity {
                                         {
                                             countOutOfRangePositionCalculated=0;
                                             leastDistanceRange+=5;
-                                           /* //sort the euclidean list and ge the 3 least distances and get their mean, compare it with offline and get the position
-                                            Collections.sort(Euc_Distance_List, new Comparator<EuclideanDistance>() {
-                                                @Override
-                                                public int compare(EuclideanDistance lhs, EuclideanDistance rhs) {
-                                                    return lhs.distance < rhs.distance ? -1
-                                                            : lhs.distance > rhs.distance ? 1
-                                                            : 0;
-                                                }
-                                            });
-
-                                            for ( EuclideanDistance ld:Euc_Distance_List) {
-                                                Log.i(" DP : " , "Dist :  " + String.valueOf(ld.distance) + "X : " + String.valueOf(ld.x) + " Y : " + String.valueOf(ld.y));
-
-                                            }
-
-                                            globalX = Euc_Distance_List.get(0).x;
-                                            globalY = Euc_Distance_List.get(0).y;
-                                            countOutOfRangePositionCalculated=0;*/
                                         }
                                     }
                                 }
                                 else {
                                     //list is less than 2 so, show the nearest position
                                     if (Least_Distance.get(0).distance < leastDistanceRange) {
-                                        //Log.i("ko", "ko");
                                         globalX = Least_Distance.get(0).x;
                                         globalY = Least_Distance.get(0).y;
                                     }
                                 }
                             }
-                            /////new code
-
-/////new code
-
-
-
-////////////sapra
-
-                            /*//cat tracker
-
-                            //new thread to get the least distance from the Euclidean_Distance list.
-                            new Thread() {
-                                @Override
-                                public void run() {
-
-                                    double avgRouter8C = 0.0;
-                                    double avgRouter28 = 0.0;
-                                    double avgRouterA8 = 0.0;
-
-                                    double iter1 = 0.0;
-
-                                    boolean positionFound = false;
-
-                                    //List to store all off-line mean datapoints from parse into a list of class DataPoint
-                                    List<DataPoint> dataPointsThread2 = new ArrayList<>(dataPointsThread);
-                                    List<EuclideanDistance> edListThreadCopy = new ArrayList<>(Euclidean_Distance);
-
-                                    //checking if range checks returned any positions or not
-                                    if (edListThreadCopy.size() > 0) {
-                                        Log.i("IF  worked...",String.valueOf(edListThreadCopy.size()));
-                                        double leastDist = edListThreadCopy.get(0).distance;
-                                        for (EuclideanDistance edLeast : edListThreadCopy) {
-                                            //getting least euclidean distance from euclidean list
-                                            if (!(leastDist < edLeast.distance)) {
-                                                leastDist = edLeast.distance;
-                                                //assign x and y
-                                                x = edLeast.x;
-                                                y = edLeast.y;
-                                            }
-                                        }
-
-
-////sameer sameer
-
-                                        //sort the euclidean list and ge the 3 least distances and get their mean, compare it with offline and get the position
-                                        Collections.sort(edListThreadCopy, new Comparator<EuclideanDistance>() {
-                                            @Override
-                                            public int compare(EuclideanDistance lhs, EuclideanDistance rhs) {
-                                                return lhs.distance < rhs.distance ? -1
-                                                        : lhs.distance > rhs.distance ? 1
-                                                        : 0;
-                                            }
-                                        });
-
-                                        for( iter1 = 0; iter1<3; ++iter1) {
-                                            // 2(index) < 2
-                                            if(iter1 < edListThreadCopy.size())
-                                            {
-                                                avgRouter8C += edListThreadCopy.get((int)iter1).dlink7D8C;
-                                                avgRouter28 += edListThreadCopy.get((int)iter1).dlink7D28;
-                                                avgRouterA8 += edListThreadCopy.get((int)iter1).dlink95A8;
-                                            }
-                                            else
-                                            {
-                                                break;
-                                            }
-                                        }
-
-                                        Log.i("iter 1 : " , String.valueOf(iter1));
-                                        Log.i("edThreadsize : " , String.valueOf(edListThreadCopy.size()));
-
-                                        //get the mean
-                                        avgRouter28 = avgRouter28 / iter1;
-                                        avgRouter8C = avgRouter8C / iter1;
-                                        avgRouterA8 = avgRouterA8 / iter1;
-
-                                        Log.i("Router 28 : " , String.valueOf(avgRouter28) );
-                                        Log.i("Router 8C : " , String.valueOf(avgRouter8C) );
-                                        Log.i("Router A8 : " , String.valueOf(avgRouterA8) ) ;
-
-                                        //compare this new mean with offline dp
-                                        for (DataPoint dpp:dataPointsThread2) {
-
-                                            if (!positionFound) {
-                                                //range check to find exact search
-                                                for (float rangeIteration1 = 0.0f; rangeIteration1 <= 1.0f; rangeIteration1 += 0.05f) {
-                                                    if (rangeCheck(dpp.dlink7D28, avgRouter28, rangeIteration1) && rangeCheck(dpp.dlink7D8C, avgRouter8C, rangeIteration1)
-                                                            && rangeCheck(dpp.dlink95A8, avgRouterA8, rangeIteration1)) {
-                                                        if (checkTwoPositionsRange(globalY, dpp.yPos)) {
-                                                            globalX = dpp.xPos;
-                                                            globalY = dpp.yPos;
-                                                            Log.i("Position found : " , String.valueOf(globalY) + String.valueOf(globalX));
-                                                        }
-                                                        positionFound = true;
-                                                        break;
-                                                    }
-                                                }
-
-                                            }
-                                        }
-////sameer sameer
-
-
-
-                                        //displaying each data point
-                                        for (EuclideanDistance eee: edListThreadCopy) {
-                                            Log.i("DP : " , String.valueOf( eee.distance ) + " " + String.valueOf(eee.x) + " " + String.valueOf(eee.y) );
-                                        }
-
-                                        globalX = x;
-                                        globalY = y;
-
-                                        //check if position jumped too much, should be less than 3 feets
-                                        //should be greater than 0, because now globalY contains last position
-                                        if(globalY > 0) {
-                                            if(checkTwoPositionsRange(globalY, y)){
-                                                globalX = x;
-                                                globalY = y;
-                                            }
-                                            else{
-                                            }
-                                        }
-                                        //showing position for the first time
-                                        else
-                                        {
-                                            //show user's first position : can be asked from user or show our algo pos
-                                            globalX = x;
-                                            globalY = y;
-                                        }
-                                    }
-                                    else{
-                                        Log.i("IF didnt work...",String.valueOf(edListThreadCopy.size()));
-                                    }
-                                }
-                            }.start();
-*/
-////////////sapra
-
-
                         }
                     }.start();
                     //start another thread
@@ -1590,20 +1164,14 @@ public class SendDataTesting extends Activity {
             //router 8C
             Collections.sort(reatTime7D8CScanValues);
             medianOfRouter7D8C = reatTime7D8CScanValues.get(medianIndex);
-/*            Log.i("8C Values", reatTime7D8CScanValues.get(0) + " " + reatTime7D8CScanValues.get(1) + " " + reatTime7D8CScanValues.get(2)
-                    + reatTime7D8CScanValues.get(3) + " " + reatTime7D8CScanValues.get(4) + " " + String.valueOf(medianOfRouter7D8C));*/
 
             //router A8
             Collections.sort(reatTime95A8ScanValues);
             medianOfRouter95A8 = reatTime95A8ScanValues.get(medianIndex);
-       /*     Log.i("A8 Values", reatTime95A8ScanValues.get(0) + " " + reatTime95A8ScanValues.get(1) + " " + reatTime95A8ScanValues.get(2)
-                    + reatTime95A8ScanValues.get(3) + " " + reatTime95A8ScanValues.get(4) + " " + String.valueOf(medianOfRouter95A8));*/
 
             //router 28
             Collections.sort(reatTime7D28ScanValues);
             medianOfRouter7D28 = reatTime7D28ScanValues.get(medianIndex);
-/*            Log.i("28 Values", reatTime7D28ScanValues.get(0) + " " + reatTime7D28ScanValues.get(1) + " " + reatTime7D28ScanValues.get(2)
-                    + reatTime7D28ScanValues.get(3) + " " + reatTime7D28ScanValues.get(4) + " " + String.valueOf(medianOfRouter7D28));*/
 
             routerRangeCheck(reatTime7D28ScanValues,medianOfRouter7D28 ,"28");
             routerRangeCheck(reatTime95A8ScanValues,medianOfRouter95A8 ,"A8");
@@ -1624,9 +1192,7 @@ public class SendDataTesting extends Activity {
                     if ((ass - median <= 6)) {
                         //didnt pass the range check, delete this from the array
                         list.add(ass);
-                        //Log.i("1...",  router + String.valueOf(median) +  String.valueOf(ass));
-                        //arry.remove(iii);
-                        //routerRangeCheck(arry,median,router);
+
                     }
                 }
                 //-53 < -50
@@ -1635,9 +1201,7 @@ public class SendDataTesting extends Activity {
                     if ((median - ass <= 6)) {
                         //didnt pass the range check, delete this from the array
                         list.add(ass);
-                        //Log.i("2...",  router + String.valueOf(median) + String.valueOf(ass));
-                        //arry.remove(iii);
-                        //routerRangeCheck(arry,median,router);
+
                     }
                 }
             }
@@ -1723,18 +1287,18 @@ public class SendDataTesting extends Activity {
                 for (int i = 0; i < wifiScanList.size(); i++) {
                     String ssid = (wifiScanList.get(i).SSID).toString();
                     if ((ssid.equals(Router7D8C))) {
-                        //Router7D8CLevel += wifiScanList.get(i).level;
+
                         reatTime7D8CScanValues.add(wifiScanList.get(i).level);
                     } else if (ssid.equals(Router95A8)) {
-                        //Router95A8Level += wifiScanList.get(i).level;
+
                         reatTime95A8ScanValues.add(wifiScanList.get(i).level );
                     } else if ((ssid.equals(Router7D28))) {
-                        //Router7D28Level += wifiScanList.get(i).level;
+
                         reatTime7D28ScanValues.add(wifiScanList.get(i).level );
                     }
                 }
                 calculationsForDataPointControl = true;
-                //i++;
+
             } catch (Exception e) {
                 Toast.makeText(getBaseContext(), "Error Occurred...", Toast.LENGTH_SHORT).show();
             }
@@ -1742,7 +1306,7 @@ public class SendDataTesting extends Activity {
     }
 
 
-    private class MeanTask extends AsyncTask<Void,Void,String>{
+    private class MeanTask extends AsyncTask<Void,Void,String> {
         @Override
         protected String doInBackground(Void... params) {
 
@@ -1752,7 +1316,7 @@ public class SendDataTesting extends Activity {
                 query.findInBackground(new FindCallback<ParseObject>() {
                     public void done(List<ParseObject> scoreList, ParseException e) {
                         if (e == null) {
-                            for (ParseObject po: scoreList) {
+                            for (ParseObject po : scoreList) {
                                 String xPos = po.getString("xPos");
                                 String yPos = po.getString("yPos");
                                 String direction = po.getString("direction");
@@ -1762,7 +1326,7 @@ public class SendDataTesting extends Activity {
 
 
                                 DataPoint dataPoint = new DataPoint();
-                                //dataPoint.xPos = Integer.parseInt(xPos);
+
                                 dataPoint.xPos = Float.parseFloat(xPos);
                                 dataPoint.yPos = Integer.parseInt(yPos);
                                 dataPoint.direction = direction;
@@ -1785,483 +1349,8 @@ public class SendDataTesting extends Activity {
         @Override
         protected void onPostExecute(String msg) {
             Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
-            Toast.makeText(getBaseContext(), "Give us your position by clicking on map..." , Toast.LENGTH_SHORT).show();
+            Toast.makeText(getBaseContext(), "Give us your position by clicking on map...", Toast.LENGTH_SHORT).show();
         }
     }
-
-    /*public class getMeanFromParse implements Runnable {
-        @Override
-        public void run() {
-
-            try {
-                ParseQuery<ParseObject> query = ParseQuery.getQuery("Final0");
-                query.setLimit(436);
-                query.findInBackground(new FindCallback<ParseObject>() {
-                public void done(List<ParseObject> scoreList, ParseException e) {
-                    if (e == null) {
-                        Log.i("List Size", String.valueOf(scoreList.size()));
-                        Toast.makeText(getBaseContext() , "Got all data : " +  String.valueOf(scoreList.size()) , Toast.LENGTH_LONG).show();
-                        for (ParseObject po: scoreList) {
-                            String xPos = po.getString("xPos");
-                            String yPos = po.getString("yPos");
-                            String direction = po.getString("direction");
-                            String dlink7d28 = po.getString("dlink7D28");
-                            String dlink95A8 = po.getString("dlink95A8");
-                            String dlink7d8c = po.getString("dlink7D8C");
-
-
-                            DataPoint dataPoint = new DataPoint();
-                            //dataPoint.xPos = Integer.parseInt(xPos);
-                            dataPoint.xPos = Float.parseFloat(xPos);
-                            dataPoint.yPos = Integer.parseInt(yPos);
-                            dataPoint.direction = direction;
-                            dataPoint.dlink7D28 = Double.parseDouble(dlink7d28);
-                            dataPoint.dlink7D8C = Double.parseDouble(dlink7d8c);
-                            dataPoint.dlink95A8 = Double.parseDouble(dlink95A8);
-                            dataPoints.add(dataPoint);
-                        }
-                    } else {
-                        Log.d("Error", "ErrorMessagedd : " + e.getMessage());
-                    }
-                }
-                });
-            } catch (Exception ex) {
-                Toast.makeText(getBaseContext(), "wrong wrong..", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }*/
-
-
-
-
-    /*public class getMeanFromParse implements Runnable {
-
-        int y = 1;
-
-        @Override
-        public void run() {
-
-            try {
-                while (y < 29) {
-                    ParseQuery<ParseObject> query = ParseQuery.getQuery("DecMeanData");
-                    query.whereEqualTo("xPos", "1");
-                    query.whereEqualTo("yPos", String.valueOf(y));
-                    query.setLimit(4);
-                    query.findInBackground(new FindCallback<ParseObject>() {
-
-                        public void done(List<ParseObject> scoreList, ParseException e) {
-                            if (e == null) {
-                                Log.i("score", "Retrieved " + scoreList.size() + " scores");
-
-                                //for rows for each direction representing a single location
-                                for (int i = 0; i < 4; i++) {
-                                    //collect data
-                                    String xPos = scoreList.get(i).getString("xPos");
-                                    String yPos = scoreList.get(i).getString("yPos");
-                                    String direction = scoreList.get(i).getString("direction");
-                                    String dlink7d28 = scoreList.get(i).getString("dlink7D28");
-                                    String dlink95A8 = scoreList.get(i).getString("dlink95A8");
-                                    String dlink7d8c = scoreList.get(i).getString("dlink7D8C");
-
-                                    DataPoint dataPoint = new DataPoint();
-                                    //dataPoint.xPos = Integer.parseInt(xPos);
-                                    dataPoint.xPos = Float.parseFloat(xPos);
-                                    dataPoint.yPos = Integer.parseInt(yPos);
-                                    dataPoint.direction = direction;
-                                    dataPoint.dlink7D28 = Double.parseDouble(dlink7d28);
-                                    dataPoint.dlink7D8C = Double.parseDouble(dlink7d8c);
-                                    dataPoint.dlink95A8 = Double.parseDouble(dlink95A8);
-                                    dataPoints.add(dataPoint);
-
-                                 *//*   countOffLineMean++;*//*
-                                }
-                            } else {
-                                Log.d("Error", "ErrorMessage : " + e.getMessage());
-                            }
-                        }
-                    });
-                    y++;
-                }
-
-            } catch (Exception ex) {
-                Toast.makeText(getBaseContext(), "wrong wrong..", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }*/
 }
 
-
-
-
-    /*public class UpdateLocation implements  Runnable{
-
-        //level of each router.
-        int Router95A8Level =0;
-        int Router7D28Level=0;
-        int Router7D8CLevel=0;
-
-        //mean and sum of real time values.
-        double meanOfRouter95A8 = 0;
-        double meanOfRouter7D28 = 0;
-        double meanOfRouter7D8C = 0;
-
-        @Override
-        public void run() {
-            try {
-                int i = 0;
-
-                //compare the real time data with mean data and update the position
-                while (i < numberOfTimesRTData) {
-                    wifi.startScan();
-                    if (calculationsForDataPointControl) {
-                        //get the mean of 3 routers fo 5 rows
-                        //Log.i("sum 3", String.valueOf(i) + " " + String.valueOf(Router95A8Level));
-                        i++;
-                        calculationsForDataPointControl = false;
-                        RTDataThreadControl = false;
-                    }
-                }
-                //calculating the mean of 3 different RT routers.
-                meanOfRouter7D28 = Router7D28Level / numberOfTimesRTData;
-                meanOfRouter7D8C = Router7D8CLevel / numberOfTimesRTData;
-                meanOfRouter95A8 = Router95A8Level / numberOfTimesRTData;
-
-                Log.i("mean of 7D28", String.valueOf(meanOfRouter7D28));
-                Log.i("mean of 7D8C", String.valueOf(meanOfRouter7D8C));
-                Log.i("mean of 95A8", String.valueOf(meanOfRouter95A8));
-
-             *//*   SendDataTesting.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ch1.setText(String.valueOf(Router7D28Level) + " " + String.valueOf(Router7D8CLevel) + " " + String.valueOf(Router95A8Level));
-                        ch.setText(String.valueOf(meanOfRouter7D28) + " " + String.valueOf(meanOfRouter7D8C) + " " + String.valueOf(meanOfRouter95A8));
-                    }
-                });*//*
-
-
-                    //compare RT mean with the off-line mean data and update the position on the map
-               *//* for (DataPoint dp:dataPoints) {
-
-                    //do linear search
-
-                    //exact search
-                    if(dp.dlink95A8.equals(String.valueOf(meanOfRouter95A8))&&dp.dlink7D28.equals(String.valueOf(meanOfRouter7D28))
-                            &&dp.dlink7D8C.equals(String.valueOf(meanOfRouter7D8C)))
-                    {
-                        //found the location and update it on the map
-                        Toast.makeText(getBaseContext(),dp.xPos + "  " + dp.yPos,Toast.LENGTH_SHORT).show();
-                    }
-
-                    //find the possible positions from off-line mean
-                    if(true)
-                    {
-
-                    }
-                }
-*//*
-
-            }
-            catch (Exception ex)
-            {
-                Toast.makeText(getBaseContext(),ex.getMessage().toString(),Toast.LENGTH_SHORT).show();
-            }
-        }
-
-        public class WifiScanReceiver extends BroadcastReceiver {
-            public void onReceive(Context c, Intent intent) {
-                try {
-                    List<ScanResult> wifiScanList = wifi.getScanResults();
-
-                    for (int i = 0; i < wifiScanList.size(); i++) {
-                        String ssid = (wifiScanList.get(i).SSID).toString();
-                        if ((ssid.equals(Router7D8C))){
-
-                            Router7D8CLevel += wifiScanList.get(i).level;
-                        }
-                        else if(ssid.equals(Router95A8)) {
-                            Router95A8Level += wifiScanList.get(i).level;
-                        }
-                        else if((ssid.equals(Router7D28))){
-                            Router7D28Level += wifiScanList.get(i).level;
-                        }
-                    }
-                    calculationsForDataPointControl = true;
-                    //i++;
-                } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), "Error Occurred...", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-    }*/
-
- /*private class MeanTask extends AsyncTask<Void,Void,String>{
-
-        int y = 1;
-        @Override
-        protected String doInBackground(Void... params) {
-            //int x = 1;
-
-            while ( y <29) {
-                ParseQuery<ParseObject> query = ParseQuery.getQuery("MeanData");
-                query.whereEqualTo("xPos", "1");
-                query.whereEqualTo("yPos", String.valueOf(y));
-                query.setLimit(4);
-                query.findInBackground(new FindCallback<ParseObject>() {
-
-                    public void done(List<ParseObject> scoreList, ParseException e) {
-                        if (e == null) {
-                            Log.d("score", "Retrieved " + scoreList.size() + " scores");
-
-                            //for rows for each direction representing a single location
-                            for (int i = 0; i < 4; i++) {
-                                //collect data
-                                String xPos = scoreList.get(i).getString("xPos");
-                                String yPos = scoreList.get(i).getString("yPos");
-                                String direction = scoreList.get(i).getString("direction");
-                                String dlink7d28 = scoreList.get(i).getString("dlink7D28");
-                                String dlink95A8 = scoreList.get(i).getString("dlink95A8");
-                                String dlink7d8c = scoreList.get(i).getString("dlink7D8C");
-
-                                DataPoint dataPoint = new DataPoint();
-                                dataPoint.xPos = "1";
-                                dataPoint.yPos = String.valueOf(y);
-                                dataPoint.direction = direction;
-                                dataPoint.dlink7D28 = dlink7d28;
-                                dataPoint.dlink7D8C = dlink7d8c;
-                                dataPoint.dlink95A8 = dlink95A8;
-                                dataPoints.add(dataPoint);
-
-
-                            }
-                        } else {
-                            Log.d("score", "Error: " + e.getMessage());
-                        }
-                    }
-                });
-                y++;
-     //           break;
-            }
-            return String.valueOf(dataPoints.size());
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            Toast.makeText(getBaseContext(), s.toString(), Toast.LENGTH_SHORT).show();
-        }
-    }
-*/
-
-//get the nearest router
-//meanOfRouter95A8 is neareset to the user
-/*
-
-if (meanOfRouter95A8 > meanOfRouter7D28 && meanOfRouter95A8 > meanOfRouter7D8C) {
-        //meanOfRouter95A8 is neareset to the user
-        //Log.i("correct11111", String.valueOf(meanOfRouter95A8));
-        globalX = 1.0f;
-        globalY = 5;
-        break;
-        }
-        //meanOfRouter7D8C is nearest to the user
-        else if (meanOfRouter7D8C > meanOfRouter7D28 && meanOfRouter7D8C > meanOfRouter95A8) {
-        //meanOfRouter7D8C is nearest to the user
-        //Log.i("correct22222", String.valueOf(meanOfRouter7D8C));
-        globalX = 2.0f;
-        globalY = 27;
-        break;
-        }
-
-        //meanOfRouter7D28 is nearest to the user
-        else if (meanOfRouter7D28 > meanOfRouter95A8 && meanOfRouter7D28 > meanOfRouter7D8C) {
-        //meanOfRouter7D28 is nearest to the user
-        //Log.i("correct333333", String.valueOf(meanOfRouter7D28));
-        globalX = 1.0f;
-        globalY = 27;
-        break;
-        }*/
-
-
-
-   /* else if ( rangeCheck(dp.dlink95A8 , threadMeanOfRouter95A8 )   && rangeCheck(dp.dlink7D28, threadMeanOfRouter7D28))
-                                {
-                                    globalX = dp.xPos;
-                                    globalY = dp.yPos;
-                                    // countRTLocs++;
-                                    break;
-                                }
-                                else if(rangeCheck(dp.dlink7D28 , threadMeanOfRouter7D28) && rangeCheck(dp.dlink7D8C , threadMeanOfRouter7D8C))
-                                {
-                                    globalX = dp.xPos;
-                                    globalY = dp.yPos;
-                                    // countRTLocs++;
-                                    break;
-                                }
-                                else if((rangeCheck(dp.dlink95A8 , threadMeanOfRouter95A8) && rangeCheck(dp.dlink7D8C , threadMeanOfRouter7D8C)))
-                                {
-                                    globalX = dp.xPos;
-                                    globalY = dp.yPos;
-                                    // countRTLocs++;
-                                    break;
-                                }*/
-
-
-
-         /* //if you dont get any location then, dont update
-                            if(countRTLocs>0)
-                            {
-                                globalX = x;
-
-                                //got only 1 position
-                                if (countRTLocs == 0)
-                                {
-                                    globalY = y;
-                                }
-                                //got more than 1 position
-                                else
-                                {
-                                    globalY = y / countRTLocs;
-                                }
-                            }*/
-
-      /*SendDataTesting.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        TextView txt1 = (TextView) findViewById(R.id.Mean1);
-                        TextView txt2 = (TextView)findViewById(R.id.Mean2);
-                        TextView txt3 = (TextView) findViewById(R.id.Mean3);
-                        int one = (int)meanOfRouter7D28;
-                        int two = (int)meanOfRouter7D8C;
-                        int three = (int)meanOfRouter95A8;
-                        txt1.setText("28" + one);
-                        txt2.setText("8C" + two);
-                        txt3.setText("A8" + three);
-                    }
-                });*/
-
-
-/*
-
-//exact search found
-if (dp.dlink95A8 == threadMeanOfRouter95A8 && dp.dlink7D28 == threadMeanOfRouter7D28
-        && dp.dlink7D8C == threadMeanOfRouter7D8C) {
-
-        double dist=0.0;
-        EuclideanDistance ed = new EuclideanDistance();
-        dist = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, dp.dlink7D28, dp.dlink7D8C, dp.dlink95A8);
-
-        ed.distance = dist;
-        ed.x = dp.xPos;
-        ed.y = dp.yPos;
-        Euclidean_Distance.add(ed);
-        }
-
-        // range check of (+-).40
-        else if (rangeCheck(dp.dlink7D28,threadMeanOfRouter7D28,rangeCheck1) && rangeCheck(dp.dlink7D8C,threadMeanOfRouter7D8C,rangeCheck1)
-        && rangeCheck(dp.dlink95A8,threadMeanOfRouter95A8,rangeCheck1)) {
-
-        double dist=0.0;
-
-        //create an instance of EuclideanDistance class
-        EuclideanDistance ed = new EuclideanDistance();
-
-        //calculate the Euclidean distance between observed and recorded values
-        dist = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, dp.dlink7D28, dp.dlink7D8C, dp.dlink95A8);
-
-        ed.distance = dist;
-        ed.x = dp.xPos;
-        ed.y = dp.yPos;
-        Euclidean_Distance.add(ed);
-        }
-
-
-        // range check of (+-).80
-        else if (rangeCheck(dp.dlink7D28,threadMeanOfRouter7D28,rangeCheck2) && rangeCheck(dp.dlink7D8C,threadMeanOfRouter7D8C,rangeCheck2)
-        && rangeCheck(dp.dlink95A8,threadMeanOfRouter95A8,rangeCheck2)) {
-
-        double dist=0.0;
-
-        //create an instance of EuclideanDistance class
-        EuclideanDistance ed = new EuclideanDistance();
-
-        //calculate the Euclidean distance between observed and recorded values
-        dist = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, dp.dlink7D28, dp.dlink7D8C, dp.dlink95A8);
-
-        ed.distance = dist;
-        ed.x = dp.xPos;
-        ed.y = dp.yPos;
-        Euclidean_Distance.add(ed);
-        }
-        //another range check of (+-)1.20
-        else if (rangeCheck(dp.dlink7D28,threadMeanOfRouter7D28,rangeCheck3) && rangeCheck(dp.dlink7D8C,threadMeanOfRouter7D8C,rangeCheck3)
-        && rangeCheck(dp.dlink95A8,threadMeanOfRouter95A8,rangeCheck3)) {
-
-        double dist=0.0;
-
-        //create an instance of EuclideanDistance class
-        EuclideanDistance ed = new EuclideanDistance();
-
-        //calculate the Euclidean distance between observed and recorded values
-        dist = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, dp.dlink7D28, dp.dlink7D8C, dp.dlink95A8);
-
-        ed.distance = dist;
-        ed.x = dp.xPos;
-        ed.y = dp.yPos;
-        Euclidean_Distance.add(ed);
-        }
-
-        //another range check of (+-)1.60
-        else if (rangeCheck(dp.dlink7D28,threadMeanOfRouter7D28,rangeCheck4) && rangeCheck(dp.dlink7D8C,threadMeanOfRouter7D8C,rangeCheck4)
-        && rangeCheck(dp.dlink95A8,threadMeanOfRouter95A8,rangeCheck4)) {
-
-        double dist=0.0;
-
-        //create an instance of EuclideanDistance class
-        EuclideanDistance ed = new EuclideanDistance();
-
-        //calculate the Euclidean distance between observed and recorded values
-        dist = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, dp.dlink7D28, dp.dlink7D8C, dp.dlink95A8);
-
-        ed.distance = dist;
-        ed.x = dp.xPos;
-        ed.y = dp.yPos;
-        Euclidean_Distance.add(ed);
-        }
-
-        //another range check of (+-)2.0
-        else if (rangeCheck(dp.dlink7D28,threadMeanOfRouter7D28,rangeCheck5) && rangeCheck(dp.dlink7D8C,threadMeanOfRouter7D8C,rangeCheck5)
-        && rangeCheck(dp.dlink95A8,threadMeanOfRouter95A8,rangeCheck5)) {
-
-        double dist=0.0;
-
-        //create an instance of EuclideanDistance class
-        EuclideanDistance ed = new EuclideanDistance();
-
-        //calculate the Euclidean distance between observed and recorded values
-        dist = calculateEuclideanDistance(threadMeanOfRouter7D28, threadMeanOfRouter7D8C, threadMeanOfRouter95A8, dp.dlink7D28, dp.dlink7D8C, dp.dlink95A8);
-
-        ed.distance = dist;
-        ed.x = dp.xPos;
-        ed.y = dp.yPos;
-        Euclidean_Distance.add(ed);
-        }*/
-
-
-/*
-    public class CreateNewUpdateLocationThreads implements Runnable{
-        @Override
-        public void run() {
-            try {
-                int numberOfThreads = 0;
-                while (numberOfThreads < 3) {
-                    Thread locationThread = new Thread(new UpdateLocation());
-                    locationThread.start();
-                    numberOfThreads++;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Toast.makeText(getBaseContext(),"Error occured in creating thread...", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }*/
